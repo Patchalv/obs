@@ -53,6 +53,10 @@ _Avoid_: Post, seguimiento, ticket
 A message sent inside a Thread to discuss its sub-topic.
 _Avoid_: Reply, comment, respuesta
 
+**Attachment**:
+An image or file added to a Thread or Response. Anyone who can read that Thread can open it.
+_Avoid_: Upload, document, adjunto
+
 **Resolved thread**:
 A Thread marked finished. It is hidden from its Channel unless someone searches for it or chooses to show resolved Threads, and it can be reopened.
 _Avoid_: Closed, finalizada, done
