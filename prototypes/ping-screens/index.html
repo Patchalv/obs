@@ -1,0 +1,729 @@
+<!doctype html>
+<!--
+  PROTOTYPE — throwaway. Lives on branch prototype/ping-screens only, never on master.
+  Question (ticket "How should Ping's inbox, Channel and Thread screens look on laptop and phone?"):
+  which layout makes acknowledging Pings fast on a laptop and still workable on a phone?
+  Three structurally different variants, switchable with ?variant=A|B|C (or ← → keys, or the bottom bar).
+  Laptop/phone frame toggle: ?frame=laptop|phone (in the bottom bar).
+  All state is in memory. Reload resets it. People and content are fake.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ping screens prototype</title>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/htm@3.1.1/dist/htm.umd.js"></script>
+<style>
+  :root {
+    --bg: #f6f6f4; --panel: #fff; --line: #e3e2de; --text: #1d1d1b; --muted: #6d6c67;
+    --accent: #2f5bd3; --accent-soft: #e7edfc; --ping: #d9480f; --ping-soft: #fff0e8;
+    --ok: #2b8a3e; --mention: #fff3bf; --sys: #f1f3f5;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--text); background: #d8d7d2; }
+  button { font: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 4px 8px; color: var(--text); }
+  button:hover { background: #f0efeb; }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button.ghost { border-color: transparent; background: transparent; }
+  button.big { padding: 10px 14px; font-weight: 600; }
+  input, select, textarea { font: inherit; }
+  .muted { color: var(--muted); }
+  .small { font-size: 12px; }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .grow { flex: 1; min-width: 0; }
+  .ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badge { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 10px; background: var(--ping); color: #fff; font-size: 12px; font-weight: 700; text-align: center; line-height: 18px; }
+  .badge.grey { background: #adb5bd; }
+  .pill { display: inline-block; padding: 0 8px; border-radius: 10px; font-size: 12px; border: 1px solid var(--line); background: #fff; }
+  .pill.open { color: var(--ok); border-color: #b2f2bb; }
+  .pill.resolved { color: var(--muted); }
+  .pill.new { background: var(--ping-soft); color: var(--ping); border-color: #ffd8c2; font-weight: 600; }
+  .mention { background: var(--mention); border-radius: 3px; padding: 0 2px; font-weight: 600; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex: none; }
+  .deact { opacity: .55; }
+  .tag { font-size: 11px; padding: 0 5px; border-radius: 4px; background: #e9ecef; color: var(--muted); }
+
+  /* prototype chrome: deliberately loud so nobody mistakes it for the design */
+  .proto-bar { position: fixed; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 1000; background: #111; color: #fff; border-radius: 999px; padding: 6px 10px; display: flex; gap: 10px; align-items: center; box-shadow: 0 6px 20px rgba(0,0,0,.35); font-size: 13px; white-space: nowrap; }
+  .proto-bar button { background: #333; color: #fff; border-color: #555; border-radius: 999px; }
+  .proto-frame { display: flex; gap: 2px; background: #222; border-radius: 999px; padding: 2px; }
+  .proto-frame button { background: transparent; color: #ccc; border: none; border-radius: 999px; }
+  .proto-frame button.on { background: #fff; color: #111; }
+  .toast { position: fixed; left: 50%; bottom: 56px; transform: translateX(-50%); z-index: 999; background: #2b8a3e; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 13px; }
+
+  .stage-laptop { position: fixed; inset: 0 0 58px 0; background: var(--bg); overflow: hidden; }
+  .stage-phone-wrap { position: fixed; inset: 0 0 58px 0; display: flex; align-items: center; justify-content: center; }
+  .stage-phone { width: 375px; height: min(780px, calc(100vh - 80px)); background: var(--bg); border: 10px solid #111; border-radius: 34px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+
+  /* shared leaf pieces */
+  .att-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .att-img { width: 160px; height: 100px; border-radius: 8px; background: repeating-linear-gradient(45deg, #dee2e6, #dee2e6 8px, #e9ecef 8px, #e9ecef 16px); display: flex; align-items: flex-end; padding: 4px; font-size: 11px; color: #495057; border: 1px solid var(--line); }
+  .att-file { display: inline-flex; gap: 6px; align-items: center; padding: 4px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 13px; }
+  .att-removed { font-style: italic; color: var(--muted); font-size: 13px; padding: 4px 10px; border: 1px dashed var(--line); border-radius: 8px; }
+  .composer { border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+  .composer .tools { display: flex; flex-wrap: wrap; gap: 2px; padding: 4px; border-bottom: 1px solid var(--line); }
+  .composer .tools button { border: none; padding: 2px 6px; font-size: 12px; }
+  .composer textarea { width: 100%; border: none; resize: none; padding: 8px; outline: none; min-height: 44px; }
+  .progress { height: 4px; background: #e9ecef; border-radius: 2px; overflow: hidden; width: 80px; }
+  .progress > div { height: 100%; background: var(--accent); }
+  .resp { display: flex; gap: 10px; padding: 8px 0; }
+  .resp.new-r { background: var(--ping-soft); margin: 0 -12px; padding: 8px 12px; }
+  .new-divider { display: flex; align-items: center; gap: 8px; color: var(--ping); font-size: 12px; font-weight: 700; margin: 6px 0; }
+  .new-divider::before, .new-divider::after { content: ""; flex: 1; height: 1px; background: #ffc9a8; }
+  .reactions { display: flex; gap: 4px; margin-top: 4px; }
+  .reactions span { border: 1px solid var(--line); border-radius: 10px; padding: 0 6px; font-size: 12px; background: #fff; }
+  .sys-thread { background: var(--sys); }
+  .search { position: relative; }
+  .search input { width: 100%; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+  .search-panel { position: absolute; top: 36px; left: 0; right: 0; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.15); z-index: 50; padding: 10px; max-height: 70vh; overflow: auto; min-width: 320px; }
+  .search-panel.full { position: fixed; inset: 0; top: 0; border-radius: 0; max-height: none; min-width: 0; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; font-size: 12px; background: #fff; }
+  .chip.on { background: var(--accent-soft); border-color: #bac8f5; color: var(--accent); }
+  .chip select { border: none; background: transparent; font-size: 12px; }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin: 8px 0; }
+  .tabs button { border: none; border-bottom: 2px solid transparent; border-radius: 0; background: none; }
+  .tabs button.on { border-bottom-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 0; }
+  .controls select { font-size: 12px; padding: 2px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+  .scroll { overflow: auto; min-height: 0; }
+
+  /* Variant A: three-pane triage */
+  .A-grid { display: grid; grid-template-columns: 220px 360px 1fr; grid-template-rows: 48px 1fr; height: 100%; }
+  .A-top { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; padding: 0 12px; border-bottom: 1px solid var(--line); background: #fff; }
+  .A-nav { border-right: 1px solid var(--line); background: #fbfbfa; padding: 8px; overflow: auto; }
+  .A-nav .item { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 6px; cursor: pointer; }
+  .A-nav .item:hover { background: #f0efeb; }
+  .A-nav .item.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .A-nav h4 { margin: 14px 8px 4px; font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: .04em; }
+  .A-list { border-right: 1px solid var(--line); background: #fff; display: flex; flex-direction: column; min-height: 0; }
+  .A-list .head { padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  .A-row { padding: 10px 12px; border-bottom: 1px solid #f1f0ec; cursor: pointer; }
+  .A-row:hover { background: #fafaf8; }
+  .A-row.on { background: var(--accent-soft); }
+  .A-row.unread .title { font-weight: 700; }
+  .A-pane { display: flex; flex-direction: column; min-height: 0; background: #fff; }
+  .A-ack { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--ping-soft); }
+  .A-ack.clear { background: #f8f9fa; }
+  kbd { font-size: 10px; border: 1px solid #ccc; border-bottom-width: 2px; border-radius: 3px; padding: 0 3px; color: var(--muted); background: #fff; margin-left: 4px; }
+  .A-tabs { display: flex; border-top: 1px solid var(--line); background: #fff; }
+  .A-tabs button { flex: 1; border: none; border-radius: 0; padding: 8px 0 10px; background: none; font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .A-tabs button.on { color: var(--accent); font-weight: 700; }
+
+  /* Variant B: channel-first */
+  .B-grid { display: grid; grid-template-columns: 240px 1fr; height: 100%; }
+  .B-side { background: #24292f; color: #e6e6e6; padding: 10px 8px; overflow: auto; }
+  .B-side .item { display: flex; gap: 8px; align-items: center; padding: 4px 8px; border-radius: 6px; cursor: pointer; }
+  .B-side .item:hover { background: #32383f; }
+  .B-side .item.on { background: var(--accent); color: #fff; }
+  .B-side .item.has { color: #fff; font-weight: 700; }
+  .B-side h4 { margin: 14px 8px 4px; font-size: 11px; text-transform: uppercase; color: #9aa0a6; }
+  .B-main { display: flex; flex-direction: column; min-height: 0; position: relative; }
+  .B-top { display: flex; gap: 12px; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--line); background: #fff; }
+  .B-feed { padding: 8px 16px 80px; }
+  .B-card { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; position: relative; }
+  .B-card.hasping { border-left: 4px solid var(--ping); }
+  .B-card .inline-ack { display: flex; gap: 4px; }
+  .B-panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(520px, 60%); background: #fff; border-left: 1px solid var(--line); box-shadow: -10px 0 30px rgba(0,0,0,.08); display: flex; flex-direction: column; z-index: 20; }
+  .B-drop { position: absolute; right: 16px; top: 46px; width: 380px; max-height: 70vh; overflow: auto; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.15); z-index: 40; }
+  .B-drop .r { padding: 8px 10px; border-bottom: 1px solid #f1f0ec; }
+
+  /* Variant C: focus queue */
+  .C-wrap { display: flex; flex-direction: column; height: 100%; }
+  .C-top { display: flex; gap: 12px; align-items: center; padding: 8px 16px; background: #fff; border-bottom: 1px solid var(--line); }
+  .C-seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .C-seg button { border: none; border-radius: 0; padding: 6px 12px; }
+  .C-seg button.on { background: var(--text); color: #fff; }
+  .C-body { flex: 1; display: grid; grid-template-columns: 260px 1fr; min-height: 0; }
+  .C-queue { border-right: 1px solid var(--line); overflow: auto; background: #fbfbfa; }
+  .C-queue .q { padding: 8px 12px; border-bottom: 1px solid #f1f0ec; cursor: pointer; font-size: 13px; }
+  .C-queue .q.on { background: var(--accent-soft); }
+  .C-focus { overflow: auto; padding: 20px; }
+  .C-card { max-width: 760px; margin: 0 auto; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+  .C-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0; }
+  .C-actions button { padding: 12px 6px; font-weight: 600; }
+  .C-phone-actions { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); background: #fff; }
+  .C-phone-actions button { border: none; border-radius: 0; padding: 10px 2px; font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; background: #fff; }
+  .card-list .li { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; }
+
+  .phone-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: #fff; border-bottom: 1px solid var(--line); min-height: 48px; }
+  .phone-head h3 { margin: 0; font-size: 16px; }
+  .phone-body { flex: 1; overflow: auto; min-height: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const { useState, useEffect, useMemo, useRef, createContext, useContext } = React;
+const html = htm.bind(React.createElement);
+
+/* ------------------------------------------------------------------ fixture (fake) */
+const ME = 'cam';
+const PEOPLE = {
+  ana: { name: 'Ana Test', color: '#c2255c', role: 'Admin' },
+  ben: { name: 'Ben Sample', color: '#1971c2', role: 'Member' },
+  cam: { name: 'Cam Example', color: '#2b8a3e', role: 'Member' },
+  dee: { name: 'Dee Placeholder', color: '#868e96', role: 'Member', deactivated: true },
+  eli: { name: 'Eli Mock', color: '#e67700', role: 'Member' },
+  sys: { name: 'Ping', color: '#495057', system: true },
+};
+const CHANNELS = [
+  { id: 'front-desk', name: 'front-desk', desc: 'Reception: arrivals, keys, phone messages.', private: false, members: ['ana','ben','cam','dee'], admins: ['ana'], muted: false, resolveWho: 'Anyone in the Channel' },
+  { id: 'maintenance', name: 'maintenance', desc: 'Building jobs and repairs.', private: false, members: ['ben','cam','eli','dee'], admins: ['ben'], muted: true, resolveWho: 'Channel admins' },
+  { id: 'tours-ops', name: 'tours-ops', desc: 'School tours programme logistics.', private: false, members: ['ana','cam','eli'], admins: ['ana','eli'], muted: false, resolveWho: 'Anyone in the Channel' },
+  { id: 'owners', name: 'owners', desc: 'Owners only.', private: true, members: ['ana','cam'], admins: ['ana'], muted: false, resolveWho: 'Thread author' },
+  { id: 'ana-cam', name: 'Ana & Cam', desc: '1:1', private: true, members: ['ana','cam'], admins: ['ana','cam'], muted: false, resolveWho: 'Anyone in the Channel' },
+  { id: 'lost-property', name: 'lost-property', desc: 'Things left behind in classrooms.', private: false, members: ['ana','ben'], admins: ['ben'], muted: false, resolveWho: 'Anyone in the Channel' },
+];
+let rid = 100;
+const R = (author, at, body, extra = {}) => ({ id: 'r' + (rid++), author, at, body, attachments: [], reactions: [], ...extra });
+const THREADS = [
+  { id: 't1', channel: 'front-desk', title: 'Room 4 key missing after Friday class', author: 'ana', started: 1, latest: 98, at: '09:41',
+    body: 'The key for Room 4 was not on the board this morning. Photo of the board attached. Has anyone got it?',
+    attachments: [{ kind: 'image', name: 'key-board.jpg' }], status: 'open', pings: 3, mention: false, todo: false, mutedThread: false,
+    responses: [
+      R('ben', 'Fri 18:02', 'I locked up on Friday but left it on the hook, I think.'),
+      R('dee', 'Fri 18:30', 'Spare is in the office safe.', { attachments: [{ kind: 'removed', by: 'Ana Test' }] }),
+      R('ana', '09:20', 'Checked the safe, the spare is there. Original still missing.'),
+      R('ben', '09:35', 'Teacher in Room 4 says she gave it to the cleaner.', { reactions: ['👀 1'] }),
+      R('eli', '09:41', 'Found it in the cleaning cupboard. @Cam Example can you put it back on the board?'),
+    ] },
+  { id: 't2', channel: 'front-desk', title: 'Printer on floor 2 jams on A3', author: 'ben', started: 2, latest: 90, at: '08:55',
+    body: 'Third time this week. Paper tray B.', attachments: [{ kind: 'file', name: 'error-log.txt', size: '4 KB' }],
+    status: 'open', pings: 1, mention: false, todo: true, mutedThread: false,
+    responses: [ R('ana', '08:55', 'Service visit booked for Wednesday.') ] },
+  { id: 't3', channel: 'maintenance', title: 'Leaking tap in staff kitchen', author: 'eli', started: 3, latest: 95, at: '09:10',
+    body: '@Cam Example can you let the plumber in on Tuesday at 10?', attachments: [], status: 'open', pings: 1, mention: true, todo: false, mutedThread: false,
+    responses: [] },
+  { id: 't4', channel: 'tours-ops', title: 'Coach booking for the 14th: confirm numbers', author: 'ana', started: 4, latest: 92, at: '09:02',
+    body: 'Quote attached. Need final group size by Thursday.', attachments: [{ kind: 'file', name: 'coach-quote.pdf', size: '240 KB' }],
+    status: 'open', pings: 2, mention: false, todo: true, mutedThread: false,
+    responses: [ R('eli', 'Mon', 'Group A is 32 with teachers.'), R('eli', '08:50', 'Group B is 28.'), R('ana', '09:02', 'Thanks. Cam, can you sign it off?') ] },
+  { id: 't5', channel: 'maintenance', title: 'Ben Sample is now the Channel admin', author: 'sys', system: true, started: 5, latest: 80, at: 'Yesterday',
+    body: 'Dee Placeholder was Deactivated and was the only Channel admin. Ben Sample, the longest-standing active member, is now the Channel admin.',
+    attachments: [], status: 'open', pings: 1, mention: false, todo: false, mutedThread: false, responses: [] },
+  { id: 't6', channel: 'owners', title: 'Budget draft for next term', author: 'ana', started: 6, latest: 60, at: 'Tue',
+    body: 'First pass in the attached sheet.', attachments: [{ kind: 'file', name: 'budget-draft.xlsx', size: '88 KB' }],
+    status: 'open', pings: 0, mention: false, todo: false, mutedThread: false, responses: [ R('cam', 'Tue', 'Looks fine, one question on rent.') ] },
+  { id: 't7', channel: 'front-desk', title: 'Umbrella left at reception', author: 'ben', started: 7, latest: 40, at: 'Mon',
+    body: 'Blue umbrella, collected.', attachments: [], status: 'resolved', pings: 0, mention: false, todo: false, mutedThread: false, responses: [ R('ana', 'Mon', 'Owner collected it.') ] },
+  { id: 't8', channel: 'ana-cam', title: 'Cover for Thursday?', author: 'ana', started: 8, latest: 97, at: '09:38',
+    body: 'Could you cover the 3pm class on Thursday?', attachments: [], status: 'open', pings: 1, mention: false, todo: false, mutedThread: false, responses: [] },
+  { id: 't9', channel: 'tours-ops', title: 'Name badges for tour group', author: 'cam', started: 9, latest: 70, at: 'Tue',
+    body: 'I will print badges for both groups.', attachments: [{ kind: 'image', name: 'badge-mockup.png' }], status: 'open', pings: 0, mention: false, todo: true, mutedThread: true,
+    responses: [ R('eli', 'Tue', 'Use the new logo please.') ] },
+  { id: 't10', channel: 'maintenance', title: 'Hallway light flickering', author: 'ben', started: 10, latest: 85, at: 'Yesterday',
+    body: 'Second floor, near Room 6.', attachments: [], status: 'open', pings: 0, mention: false, todo: false, mutedThread: false,
+    responses: [ R('eli', 'Yesterday', 'New tube ordered.') ] },
+  { id: 't11', channel: 'lost-property', title: 'Grey jumper in Room 2', author: 'ben', started: 11, latest: 50, at: 'Mon',
+    body: 'On the back of a chair.', attachments: [], status: 'open', pings: 0, mention: false, todo: false, mutedThread: false, responses: [] },
+];
+
+/* ------------------------------------------------------------------ app state */
+const Ctx = createContext(null);
+const useApp = () => useContext(Ctx);
+// keeps inner components' identity stable across renders so Composer drafts survive re-renders
+function useStable(fn) { const r = useRef(fn); r.current = fn; return useMemo(() => function Stable(p) { return r.current(p); }, []); }
+function useAppState() {
+  const [threads, setThreads] = useState(() => JSON.parse(JSON.stringify(THREADS)));
+  const [channels, setChannels] = useState(() => JSON.parse(JSON.stringify(CHANNELS)));
+  const [toast, setToast] = useState(null);
+  const [prefs, setPrefs] = useState({}); // per-Channel Thread list choices (real app: browser storage)
+  const flash = (m) => { setToast(m); clearTimeout(window.__t); window.__t = setTimeout(() => setToast(null), 2200); };
+  const upd = (id, fn) => setThreads(ts => ts.map(t => t.id === id ? fn({ ...t }) : t));
+  const chan = (id) => channels.find(c => c.id === id);
+  const canSee = (c) => !c.private || c.members.includes(ME);
+  const isMember = (c) => c.members.includes(ME);
+  const api = {
+    threads, channels, prefs, toast, chan, canSee, isMember,
+    visibleThreads: threads.filter(t => canSee(chan(t.channel))),
+    get pinged() { return this.visibleThreads.filter(t => t.pings > 0 && isMember(chan(t.channel))).sort((a, b) => b.latest - a.latest); },
+    get todo() { return this.visibleThreads.filter(t => t.todo).sort((a, b) => b.latest - a.latest); },
+    pingsIn: (cid) => threads.filter(t => t.channel === cid && t.pings > 0).length,
+    thread: (id) => threads.find(t => t.id === id),
+    // Acknowledge: the four allowed ways. Viewing does nothing.
+    markRead: (id) => { upd(id, t => ({ ...t, pings: 0 })); flash('Acknowledged: marked read'); },
+    react: (id, e = '👍') => { upd(id, t => { const rs = t.responses.slice(); if (rs.length) { const l = { ...rs[rs.length - 1] }; l.reactions = [...l.reactions, e + ' 1']; rs[rs.length - 1] = l; } return { ...t, responses: rs, pings: 0, reactions: rs.length ? t.reactions : [...(t.reactions || []), e + ' 1'] }; }); flash('Acknowledged: reacted ' + e); },
+    addTodo: (id) => { upd(id, t => ({ ...t, todo: true, pings: 0 })); flash('Acknowledged: added to To Do'); },
+    doneTodo: (id) => { upd(id, t => ({ ...t, todo: false })); flash('Marked done, removed from To Do (Pings unaffected)'); },
+    respond: (id, text, files) => { upd(id, t => ({ ...t, pings: 0, latest: 99 + Math.random(), responses: [...t.responses, R(ME, 'now', text || '(empty)', { attachments: files.map(f => ({ kind: f.kind, name: f.name, size: f.size })) })] })); flash('Acknowledged: Response sent'); },
+    resolve: (id) => { upd(id, t => ({ ...t, status: t.status === 'open' ? 'resolved' : 'open' })); flash('Resolve/reopen does not touch anyone’s Pings'); },
+    muteThread: (id) => upd(id, t => ({ ...t, mutedThread: !t.mutedThread })),
+    muteChannel: (cid) => setChannels(cs => cs.map(c => c.id === cid ? { ...c, muted: !c.muted } : c)),
+    join: (cid) => { setChannels(cs => cs.map(c => c.id === cid ? { ...c, members: [...c.members, ME] } : c)); flash('Joined. No Pings back-filled.'); },
+    setPref: (cid, p) => setPrefs(ps => ({ ...ps, [cid]: { ...defaultPrefs, ...ps[cid], ...p } })),
+    prefFor: (cid) => ({ ...defaultPrefs, ...prefs[cid] }),
+  };
+  return api;
+}
+const defaultPrefs = { status: 'open', pings: 'all', sort: 'latest', dir: 'desc' };
+function channelThreads(S, cid) {
+  const p = S.prefFor(cid);
+  let ts = S.threads.filter(t => t.channel === cid);
+  if (p.status !== 'all') ts = ts.filter(t => t.status === p.status);
+  if (p.pings === 'with') ts = ts.filter(t => t.pings > 0);
+  const k = p.sort === 'latest' ? 'latest' : 'started';
+  ts.sort((a, b) => p.dir === 'desc' ? b[k] - a[k] : a[k] - b[k]);
+  return ts;
+}
+
+/* ------------------------------------------------------------------ shared leaf components */
+function Avatar({ who, size = 28 }) {
+  const p = PEOPLE[who];
+  const ini = p.system ? '⚙' : p.name.split(' ').map(x => x[0]).join('');
+  return html`<span className=${'avatar' + (p.deactivated ? ' deact' : '')} style=${{ background: p.color, width: size, height: size }}>${ini}</span>`;
+}
+function Name({ who }) {
+  const p = PEOPLE[who];
+  return html`<span className=${p.deactivated ? 'deact' : ''}><b>${who === ME ? 'You' : p.name}</b>${p.deactivated && html` <span className="tag">Deactivated</span>`}${p.system && html` <span className="tag">System</span>`}</span>`;
+}
+function Rich({ text }) {
+  const parts = text.split(/(@Cam Example)/g);
+  return html`<span>${parts.map((p, i) => p === '@Cam Example' ? html`<span key=${i} className="mention">@You</span>` : p)}</span>`;
+}
+function ChanName({ c, hash = true }) {
+  return html`<span>${c.private ? '🔒 ' : hash ? '# ' : ''}${c.name}${c.muted ? html` <span title="Channel muted" className="small">🔕</span>` : ''}</span>`;
+}
+function Attachments({ list }) {
+  if (!list || !list.length) return null;
+  return html`<div className="att-list">${list.map((a, i) =>
+    a.kind === 'image' ? html`<div key=${i} className="att-img">🖼 ${a.name}</div>` :
+    a.kind === 'file' ? html`<span key=${i} className="att-file">📄 ${a.name} <span className="muted small">${a.size}</span> <a href="#" onClick=${e => e.preventDefault()}>Open</a></span>` :
+    html`<span key=${i} className="att-removed">Attachment removed by ${a.by}</span>`)}</div>`;
+}
+function PingTag({ t, S }) {
+  if (t.pings > 0) return html`<span className="pill new">${t.pings} new${t.mention ? ' · @You' : ''}</span>`;
+  return null;
+}
+function Composer({ onSend, autoFocus, compact, placeholder = 'Write a Response…', disabled }) {
+  const [text, setText] = useState('');
+  const [files, setFiles] = useState([]);
+  const ref = useRef();
+  useEffect(() => { if (autoFocus && ref.current) ref.current.focus(); }, [autoFocus]);
+  const ins = (s) => setText(x => x + s);
+  const attach = () => {
+    const f = { id: Math.random(), name: files.length % 2 ? 'notes.pdf' : 'photo-' + (files.length + 1) + '.jpg', kind: files.length % 2 ? 'file' : 'image', size: '1.2 MB', pct: 0 };
+    if (files.length >= 5) return alert('Limit is 5 Attachments (Admin-configurable)');
+    setFiles(fs => [...fs, f]);
+    const iv = setInterval(() => setFiles(fs => fs.map(x => x.id === f.id ? { ...x, pct: Math.min(100, x.pct + 20) } : x)), 250);
+    setTimeout(() => clearInterval(iv), 1400);
+  };
+  if (disabled) return html`<div className="muted small" style=${{ padding: 8 }}>Nobody can respond as the author of a System thread, but Responses from members are allowed.</div>`;
+  const uploading = files.some(f => f.pct < 100);
+  return html`<div className="composer">
+    ${!compact && html`<div className="tools">
+      ${['B','I','U','S','</>','{ }','•','1.','❝','H'].map(b => html`<button key=${b} className="ghost" title="formatting">${b}</button>`)}
+      <button className="ghost" onClick=${() => ins('🔗 ')}>🔗</button>
+      <button className="ghost" onClick=${() => ins('@')}>@</button>
+      <button className="ghost" onClick=${() => ins('🙂')}>🙂</button>
+    </div>`}
+    ${files.length > 0 && html`<div className="row" style=${{ flexWrap: 'wrap', padding: '6px 8px' }}>${files.map(f => html`<span key=${f.id} className="att-file">${f.kind === 'image' ? '🖼' : '📄'} ${f.name} ${f.pct < 100 ? html`<span className="progress"><div style=${{ width: f.pct + '%' }}></div></span>` : html`<span className="muted small">ready</span>`}<button className="ghost small" onClick=${() => setFiles(fs => fs.filter(x => x.id !== f.id))}>×</button></span>`)}</div>`}
+    <div className="row" style=${{ alignItems: 'flex-end' }}>
+      <textarea ref=${ref} rows=${compact ? 1 : 2} placeholder=${placeholder} value=${text} onInput=${e => setText(e.target.value)} />
+      <div className="row" style=${{ padding: 6 }}>
+        <button className="ghost" title="Attach" onClick=${attach}>📎</button>
+        ${compact && html`<button className="ghost" onClick=${() => ins('@')}>@</button>`}
+        <button className="primary" disabled=${uploading} onClick=${() => { onSend(text, files); setText(''); setFiles([]); }}>Send</button>
+      </div>
+    </div>
+  </div>`;
+}
+function ThreadBody({ t, S, showAll = true, onlyNewPlusContext = false }) {
+  const c = S.chan(t.channel);
+  const firstNew = t.responses.length - Math.min(t.pings, t.responses.length);
+  const [expanded, setExpanded] = useState(false);
+  const hideBefore = onlyNewPlusContext && !expanded ? Math.max(0, firstNew - 1) : 0;
+  const threadIsNew = t.pings > 0 && t.responses.length < t.pings + 0 && t.responses.length === 0;
+  return html`<div>
+    <div className=${'resp' + (t.system ? ' sys-thread' : '') + (t.pings > 0 && t.responses.length === 0 ? ' new-r' : '')} style=${t.system ? { margin: '0 -12px', padding: '8px 12px', borderRadius: 8 } : {}}>
+      <${Avatar} who=${t.author} />
+      <div className="grow">
+        <div className="row small"><${Name} who=${t.author} /><span className="muted">${t.at}</span></div>
+        <div style=${{ marginTop: 2 }}><${Rich} text=${t.body} /></div>
+        <${Attachments} list=${t.attachments} />
+        ${t.reactions && t.reactions.length > 0 && html`<div className="reactions">${t.reactions.map((r, i) => html`<span key=${i}>${r}</span>`)}</div>`}
+      </div>
+    </div>
+    ${hideBefore > 0 && html`<button className="ghost small" onClick=${() => setExpanded(true)}>Show ${hideBefore} earlier Response${hideBefore > 1 ? 's' : ''}</button>`}
+    ${t.responses.map((r, i) => i < hideBefore ? null : html`<${React.Fragment} key=${r.id}>
+      ${i === firstNew && t.pings > 0 && html`<div className="new-divider">${t.pings} new</div>`}
+      <div className=${'resp' + (i >= firstNew && t.pings > 0 ? ' new-r' : '')}>
+        <${Avatar} who=${r.author} />
+        <div className="grow">
+          <div className="row small"><${Name} who=${r.author} /><span className="muted">${r.at}</span></div>
+          <div><${Rich} text=${r.body} /></div>
+          <${Attachments} list=${r.attachments} />
+          ${r.reactions.length > 0 && html`<div className="reactions">${r.reactions.map((x, j) => html`<span key=${j}>${x}</span>`)}</div>`}
+        </div>
+      </div>
+    <//>`)}
+  </div>`;
+}
+function ThreadHeader({ t, S, compact }) {
+  const c = S.chan(t.channel);
+  return html`<div>
+    <div className="small muted"><${ChanName} c=${c} /></div>
+    <div className="row" style=${{ alignItems: 'flex-start' }}>
+      <h2 className="grow" style=${{ margin: '2px 0', fontSize: compact ? 17 : 20 }}>${t.title}</h2>
+    </div>
+    <div className="row small" style=${{ flexWrap: 'wrap' }}>
+      <span className=${'pill ' + t.status}>${t.status === 'open' ? 'Open' : 'Resolved'}</span>
+      <${PingTag} t=${t} />
+      ${t.todo && html`<span className="pill">☑ On your To Do</span>`}
+      ${t.mutedThread && html`<span className="pill">🔕 Thread muted</span>`}
+      <span className="grow"></span>
+      <button className="ghost small" onClick=${() => S.resolve(t.id)}>${t.status === 'open' ? 'Resolve' : 'Reopen'}</button>
+      <button className="ghost small" onClick=${() => S.muteThread(t.id)}>${t.mutedThread ? 'Unmute' : 'Mute'}</button>
+    </div>
+  </div>`;
+}
+function ListControls({ S, cid }) {
+  const p = S.prefFor(cid);
+  const set = (k) => (e) => S.setPref(cid, { [k]: e.target.value });
+  return html`<div className="controls small">
+    <select value=${p.status} onChange=${set('status')}><option value="open">Open</option><option value="resolved">Resolved</option><option value="all">All</option></select>
+    <select value=${p.pings} onChange=${set('pings')}><option value="all">All Threads</option><option value="with">With Pings</option></select>
+    <select value=${p.sort} onChange=${set('sort')}><option value="latest">Latest activity</option><option value="started">Date started</option></select>
+    <button className="small" onClick=${() => S.setPref(cid, { dir: p.dir === 'desc' ? 'asc' : 'desc' })}>${p.dir === 'desc' ? 'Newest ↓' : 'Oldest ↑'}</button>
+  </div>`;
+}
+function ChannelMeta({ c, S, compact }) {
+  return html`<div className="small muted" style=${{ marginTop: 2 }}>
+    ${c.desc} ${!compact && html`· Resolve: ${c.resolveWho} ·`}
+    ${' '}Members: ${c.members.map((m, i) => html`<${React.Fragment} key=${m}>${i ? ', ' : ''}<span className=${PEOPLE[m].deactivated ? 'deact' : ''}>${m === ME ? 'You' : PEOPLE[m].name.split(' ')[0]}${PEOPLE[m].deactivated ? ' (Deactivated)' : ''}${c.admins.includes(m) ? ' ★' : ''}</span><//>`)}
+    ${' '}<button className="ghost small" onClick=${() => S.muteChannel(c.id)}>${c.muted ? 'Unmute Channel' : 'Mute Channel'}</button>
+  </div>`;
+}
+function Search({ S, contextChannel, onOpenThread, onOpenChannel, full, autoOpen, onClose }) {
+  const [q, setQ] = useState('');
+  const [open, setOpen] = useState(!!autoOpen);
+  const [inC, setInC] = useState('');
+  const [from, setFrom] = useState('');
+  const [status, setStatus] = useState('all');
+  const [tab, setTab] = useState('all');
+  const box = useRef();
+  useEffect(() => { const h = (e) => { if (!full && box.current && !box.current.contains(e.target)) setOpen(false); }; document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h); }, [full]);
+  const ql = q.toLowerCase();
+  const chans = S.channels.filter(c => S.canSee(c) && (!ql || (c.name + c.desc).toLowerCase().includes(ql)));
+  const ths = S.visibleThreads.filter(t => (!inC || t.channel === inC) && (!from || t.author === from || t.responses.some(r => r.author === from)) && (status === 'all' || t.status === status)
+    && (!ql || (t.title + t.body + t.responses.map(r => r.body).join(' ')).toLowerCase().includes(ql)));
+  const close = () => { setOpen(false); onClose && onClose(); };
+  const panel = html`<div className=${'search-panel' + (full ? ' full' : '')}>
+    ${full && html`<div className="row" style=${{ marginBottom: 8 }}><input autoFocus placeholder="Search Ping" value=${q} onInput=${e => setQ(e.target.value)} style=${{ flex: 1, padding: 8, border: '1px solid #ddd', borderRadius: 8 }} /><button className="ghost" onClick=${close}>Cancel</button></div>`}
+    <div className="row" style=${{ flexWrap: 'wrap', gap: 6 }}>
+      ${contextChannel && !inC && html`<button className="chip" onClick=${() => setInC(contextChannel)}>+ In: #${S.chan(contextChannel).name}</button>`}
+      <span className=${'chip' + (inC ? ' on' : '')}>In: <select value=${inC} onChange=${e => setInC(e.target.value)}><option value="">any Channel</option>${S.channels.filter(S.canSee).map(c => html`<option key=${c.id} value=${c.id}>${c.private ? '🔒' : '#'}${c.name}</option>`)}</select></span>
+      <span className=${'chip' + (from ? ' on' : '')}>From: <select value=${from} onChange=${e => setFrom(e.target.value)}><option value="">anyone</option>${Object.entries(PEOPLE).filter(([k, p]) => !p.system).map(([k, p]) => html`<option key=${k} value=${k}>${p.name}${p.deactivated ? ' (Deactivated)' : ''}</option>`)}</select></span>
+      <span className=${'chip' + (status !== 'all' ? ' on' : '')}>Status: <select value=${status} onChange=${e => setStatus(e.target.value)}><option value="all">All</option><option value="open">Open</option><option value="resolved">Resolved</option></select></span>
+    </div>
+    <div className="tabs">${[['all', 'All'], ['channels', `Channels ${chans.length}`], ['threads', `Threads ${ths.length}`]].map(([k, l]) => html`<button key=${k} className=${tab === k ? 'on' : ''} onClick=${() => setTab(k)}>${l}</button>`)}</div>
+    ${tab !== 'threads' && html`<div>${tab === 'all' && html`<div className="small muted">Channels</div>`}${chans.slice(0, tab === 'all' ? 3 : 99).map(c => html`<div key=${c.id} className="A-row" onClick=${() => { onOpenChannel && onOpenChannel(c.id); close(); }}><${ChanName} c=${c} /> ${!S.isMember(c) && html`<span className="tag">not joined</span>`}<div className="small muted ellipsis">${c.desc}</div></div>`)}</div>`}
+    ${tab !== 'channels' && html`<div>${tab === 'all' && html`<div className="small muted" style=${{ marginTop: 8 }}>Threads</div>`}${ths.slice(0, tab === 'all' ? 5 : 99).map(t => html`<div key=${t.id} className="A-row" onClick=${() => { onOpenThread && onOpenThread(t.id); close(); }}><div className="row"><span className="grow ellipsis"><b>${t.title}</b></span><span className=${'pill ' + t.status}>${t.status === 'open' ? 'Open' : 'Resolved'}</span></div><div className="small muted ellipsis"><${ChanName} c=${S.chan(t.channel)} /> · ${t.body}</div></div>`)}</div>`}
+  </div>`;
+  if (full) return panel;
+  return html`<div className="search grow" ref=${box} style=${{ maxWidth: 560 }}>
+    <input placeholder=${contextChannel ? `Search Ping (try In: #${S.chan(contextChannel).name})` : 'Search Ping'} value=${q} onFocus=${() => setOpen(true)} onInput=${e => setQ(e.target.value)} />
+    ${open && panel}
+  </div>`;
+}
+function JoinList({ S, onOpen }) {
+  const others = S.channels.filter(c => !c.private && !S.isMember(c));
+  if (!others.length) return null;
+  return html`<div style=${{ marginTop: 10 }}><div className="small muted" style=${{ padding: '0 8px' }}>Public channels you haven't joined</div>${others.map(c => html`<div key=${c.id} className="row" style=${{ padding: '4px 8px' }}><span className="grow" style=${{ cursor: 'pointer' }} onClick=${() => onOpen(c.id)}># ${c.name}</span><button className="small" onClick=${() => S.join(c.id)}>Join</button></div>`)}</div>`;
+}
+
+/* ================================================================== Variant A: three-pane triage */
+function VariantA({ phone }) {
+  const S = useApp();
+  const [view, setView] = useState('pings'); // pings | todo | channels | ch:<id> | search
+  const [openId, setOpenId] = useState(null);
+  const [respondFocus, setRespondFocus] = useState(0);
+  const cid = view.startsWith('ch:') ? view.slice(3) : null;
+  const list = view === 'pings' ? S.pinged : view === 'todo' ? S.todo : cid ? channelThreads(S, cid) : [];
+  const t = openId && S.thread(openId);
+  useEffect(() => {
+    if (phone) return;
+    const h = (e) => {
+      if (e.target.closest('input,textarea,select,[contenteditable]')) return;
+      const i = list.findIndex(x => x.id === openId);
+      if (e.key === 'j' && list.length) setOpenId(list[Math.min(list.length - 1, i + 1)].id);
+      if (e.key === 'k' && list.length) setOpenId(list[Math.max(0, i - 1)].id);
+      if (!openId) return;
+      if (e.key === 'e') S.markRead(openId);
+      if (e.key === 't') S.addTodo(openId);
+      if (e.key === 'r') { e.preventDefault(); setRespondFocus(x => x + 1); }
+    };
+    window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h);
+  });
+  const Row_ = ({ t }) => {
+    const c = S.chan(t.channel);
+    return html`<div className=${'A-row' + (t.id === openId ? ' on' : '') + (t.pings ? ' unread' : '')} onClick=${() => setOpenId(t.id)}>
+      <div className="row"><span className="small muted grow ellipsis"><${ChanName} c=${c} /></span><span className="small muted">${t.at}</span></div>
+      <div className="row"><span className="title grow ellipsis">${t.system ? '⚙ ' : ''}${t.title}</span>${t.pings > 0 && html`<span className="badge">${t.pings}</span>`}</div>
+      <div className="row small muted"><span className="grow ellipsis">${(t.responses[t.responses.length - 1] || t).body}</span>${t.mention && t.pings ? html`<span className="mention">@You</span>` : ''}${t.todo ? ' ☑' : ''}${t.status === 'resolved' ? html`<span className="pill resolved">Resolved</span>` : ''}</div>
+      ${view === 'todo' && html`<div className="row" style=${{ marginTop: 4 }}><button className="small" onClick=${e => { e.stopPropagation(); S.doneTodo(t.id); }}>✓ Done</button></div>`}
+    </div>`;
+  };
+  const AckBar_ = () => html`<div className=${'A-ack' + (t.pings ? '' : ' clear')}>
+    ${t.pings ? html`<b style=${{ color: 'var(--ping)' }}>${t.pings} new · still Pinging you</b>` : html`<span className="muted small">No Ping</span>`}
+    <span className="grow"></span>
+    <button onClick=${() => S.markRead(t.id)}>✓ Mark read${!phone && html`<kbd>e</kbd>`}</button>
+    <button onClick=${() => S.react(t.id)}>👍 React</button>
+    ${t.todo ? html`<button onClick=${() => S.doneTodo(t.id)}>☑ Done</button>` : html`<button onClick=${() => S.addTodo(t.id)}>☐ To Do${!phone && html`<kbd>t</kbd>`}</button>`}
+    ${!phone && html`<button onClick=${() => setRespondFocus(x => x + 1)}>↩ Respond<kbd>r</kbd></button>`}
+  </div>`;
+  const ThreadPane_ = () => t ? html`<div className="A-pane" style=${{ height: '100%' }}>
+    <div style=${{ padding: '12px 16px 8px', borderBottom: '1px solid var(--line)' }}>
+      ${phone && html`<button className="ghost" onClick=${() => setOpenId(null)}>‹ Back</button>`}
+      <${ThreadHeader} t=${t} S=${S} compact=${phone} />
+    </div>
+    <${AckBar} />
+    <div className="scroll" style=${{ flex: 1, padding: '8px 16px' }}><${ThreadBody} t=${t} S=${S} /></div>
+    <div style=${{ padding: 8, borderTop: '1px solid var(--line)' }}><${Composer} key=${t.id + respondFocus} autoFocus=${respondFocus > 0} compact=${phone} disabled=${false} onSend=${(x, f) => S.respond(t.id, x, f)} /></div>
+  </div>` : html`<div className="A-pane" style=${{ alignItems: 'center', justifyContent: 'center' }}><div className="muted">Pick a Thread. Opening it does not clear its Ping.<br/><span className="small">j / k to move, e mark read, t To Do, r Respond</span></div></div>`;
+  const ChannelsList_ = () => html`<div>
+    ${S.channels.filter(c => S.isMember(c)).map(c => html`<div key=${c.id} className=${'item' + (view === 'ch:' + c.id ? ' on' : '')} onClick=${() => { setView('ch:' + c.id); setOpenId(null); }}>
+      <span className="grow ellipsis"><${ChanName} c=${c} /></span>${S.pingsIn(c.id) > 0 && html`<span className=${'badge' + (c.muted ? ' grey' : '')}>${S.pingsIn(c.id)}</span>`}</div>`)}
+    <${JoinList} S=${S} onOpen=${id => setView('ch:' + id)} />
+  </div>`;
+  const Row = useStable(Row_);
+  const AckBar = useStable(AckBar_);
+  const ThreadPane = useStable(ThreadPane_);
+  const ChannelsList = useStable(ChannelsList_);
+  const listHead = view === 'pings' ? html`<b>Pings</b> <span className="muted small">${S.pinged.length} Threads · newest first</span>`
+    : view === 'todo' ? html`<b>To Do</b> <span className="muted small">your list · still gets Pings</span>`
+    : cid ? html`<div><b><${ChanName} c=${S.chan(cid)} /></b><${ChannelMeta} c=${S.chan(cid)} S=${S} compact=${phone} /><${ListControls} S=${S} cid=${cid} /></div>` : null;
+
+  if (phone) {
+    const tab = (k, icon, label, n) => html`<button className=${(view === k || (k === 'channels' && cid)) ? 'on' : ''} onClick=${() => { setView(k); setOpenId(null); }}><span style=${{ fontSize: 18 }}>${icon}</span>${label}${n ? html` <span className="badge">${n}</span>` : ''}</button>`;
+    if (view === 'search') return html`<${Search} S=${S} full autoOpen onClose=${() => setView('pings')} onOpenThread=${id => { setOpenId(id); setView('pings'); }} onOpenChannel=${id => setView('ch:' + id)} />`;
+    return html`<div style=${{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      ${t ? html`<div style=${{ flex: 1, minHeight: 0 }}><${ThreadPane} /></div>` : html`
+        <div className="phone-head">${cid && html`<button className="ghost" onClick=${() => setView('channels')}>‹</button>`}<h3 className="grow">${view === 'pings' ? 'Pings' : view === 'todo' ? 'To Do' : view === 'channels' ? 'Channels' : ''}</h3><button className="ghost" onClick=${() => setView('search')}>🔍</button></div>
+        <div className="phone-body" style=${{ background: '#fff' }}>
+          ${cid && html`<div style=${{ padding: '8px 12px' }}>${listHead}</div>`}
+          ${view === 'channels' ? html`<div className="A-nav" style=${{ border: 'none' }}><${ChannelsList} /></div>` : list.map(x => html`<${Row} key=${x.id} t=${x} />`)}
+          ${view !== 'channels' && !list.length && html`<div className="muted" style=${{ padding: 20 }}>Nothing here.</div>`}
+        </div>`}
+      <div className="A-tabs">${tab('pings', '🔔', 'Pings', S.pinged.length)}${tab('todo', '☑', 'To Do', S.todo.length)}${tab('channels', '#', 'Channels')}</div>
+    </div>`;
+  }
+  return html`<div className="A-grid">
+    <div className="A-top"><b style=${{ fontSize: 16 }}>Ping</b><${Search} S=${S} contextChannel=${cid} onOpenThread=${setOpenId} onOpenChannel=${id => setView('ch:' + id)} /><span className="grow"></span><${Avatar} who=${ME} /></div>
+    <div className="A-nav">
+      <div className=${'item' + (view === 'pings' ? ' on' : '')} onClick=${() => setView('pings')}>🔔 <span className="grow">Pings</span>${S.pinged.length > 0 && html`<span className="badge">${S.pinged.length}</span>`}</div>
+      <div className=${'item' + (view === 'todo' ? ' on' : '')} onClick=${() => setView('todo')}>☑ <span className="grow">To Do</span><span className="badge grey">${S.todo.length}</span></div>
+      <h4>Channels</h4><${ChannelsList} />
+    </div>
+    <div className="A-list"><div className="head">${listHead}</div><div className="scroll" style=${{ flex: 1 }}>${list.map(x => html`<${Row} key=${x.id} t=${x} />`)}${!list.length && html`<div className="muted" style=${{ padding: 20 }}>Nothing here.</div>`}</div></div>
+    <${ThreadPane} />
+  </div>`;
+}
+
+/* ================================================================== Variant B: channel-first, Pings in a bell */
+function VariantB({ phone }) {
+  const S = useApp();
+  const [cid, setCid] = useState('front-desk'); // or 'todo'
+  const [openId, setOpenId] = useState(null);
+  const [bell, setBell] = useState(false);
+  const [screen, setScreen] = useState('home'); // phone: home | channel | thread | pings | search
+  const t = openId && S.thread(openId);
+  const openThread = (id) => { setOpenId(id); setBell(false); if (phone) setScreen('thread'); else setCid(S.thread(id).channel); };
+  const InlineAck_ = ({ t }) => html`<div className="inline-ack" onClick=${e => e.stopPropagation()}>
+    <button className="small" title="Mark read" disabled=${!t.pings} onClick=${() => S.markRead(t.id)}>✓</button>
+    <button className="small" title="React 👍" onClick=${() => S.react(t.id)}>👍</button>
+    <button className="small" title=${t.todo ? 'Done' : 'Add to To Do'} onClick=${() => t.todo ? S.doneTodo(t.id) : S.addTodo(t.id)}>${t.todo ? '☑' : '☐'}</button>
+  </div>`;
+  const Card_ = ({ t, showChan }) => {
+    const last = t.responses[t.responses.length - 1];
+    return html`<div className=${'B-card' + (t.pings ? ' hasping' : '') + (t.id === openId ? ' on' : '')} onClick=${() => openThread(t.id)}>
+      <div className="row"><${Avatar} who=${t.author} size=${22} /><span className="small"><${Name} who=${t.author} /></span><span className="small muted">${t.at}</span><span className="grow"></span><${InlineAck} t=${t} /></div>
+      ${showChan && html`<div className="small muted"><${ChanName} c=${S.chan(t.channel)} /></div>`}
+      <div style=${{ fontWeight: 700, margin: '4px 0' }}>${t.title} ${t.status === 'resolved' && html`<span className="pill resolved">Resolved</span>`}</div>
+      <div className="small ellipsis"><${Rich} text=${t.body} /></div>
+      <div className="row small muted" style=${{ marginTop: 6 }}>
+        <span>💬 ${t.responses.length} Responses</span>${t.attachments.length > 0 && html`<span>📎 ${t.attachments.length}</span>`}
+        ${t.pings > 0 && html`<span className="pill new">${t.pings} new</span>`}${t.mention && t.pings ? html`<span className="mention">@You</span>` : ''}${t.todo ? html`<span className="pill">☑ To Do</span>` : ''}${t.mutedThread ? '🔕' : ''}
+        ${last && html`<span className="grow ellipsis">Latest: ${PEOPLE[last.author].name.split(' ')[0]}: ${last.body}</span>`}
+      </div>
+    </div>`;
+  };
+  const Panel_ = () => t && html`<div className=${phone ? '' : 'B-panel'} style=${phone ? { display: 'flex', flexDirection: 'column', height: '100%', background: '#fff' } : {}}>
+    <div style=${{ padding: '10px 14px', borderBottom: '1px solid var(--line)' }}>
+      <div className="row"><button className="ghost" onClick=${() => { setOpenId(null); if (phone) setScreen(S.chan(t.channel) ? 'channel' : 'home'); }}>${phone ? '‹ Back' : '✕'}</button><span className="grow"></span>
+        <button onClick=${() => S.markRead(t.id)} disabled=${!t.pings}>✓ Read</button><button onClick=${() => S.react(t.id)}>👍</button>
+        <button onClick=${() => t.todo ? S.doneTodo(t.id) : S.addTodo(t.id)}>${t.todo ? '☑ Done' : '☐ To Do'}</button></div>
+      <${ThreadHeader} t=${t} S=${S} compact />
+    </div>
+    <div className="scroll" style=${{ flex: 1, padding: '8px 14px' }}><${ThreadBody} t=${t} S=${S} /></div>
+    <div style=${{ padding: 8, borderTop: '1px solid var(--line)' }}><${Composer} key=${t.id} compact=${phone} onSend=${(x, f) => S.respond(t.id, x, f)} /></div>
+  </div>`;
+  const PingsList_ = () => html`<div>${S.pinged.map(t => html`<div key=${t.id} className="B-drop-r r" style=${{ padding: '8px 10px', borderBottom: '1px solid #f1f0ec', cursor: 'pointer' }} onClick=${() => openThread(t.id)}>
+    <div className="row small muted"><${ChanName} c=${S.chan(t.channel)} /><span className="grow"></span>${t.at}</div>
+    <div className="row"><b className="grow ellipsis">${t.title}</b><span className="badge">${t.pings}</span></div>
+    <div className="row small"><span className="grow muted ellipsis">${(t.responses[t.responses.length - 1] || t).body}</span><${InlineAck} t=${t} /></div>
+  </div>`)}${!S.pinged.length && html`<div className="muted" style=${{ padding: 16 }}>All Pings acknowledged.</div>`}</div>`;
+  const Feed_ = () => {
+    if (cid === 'todo') return html`<div className="B-feed"><h3>To Do</h3>${S.todo.map(t => html`<${Card} key=${t.id} t=${t} showChan />`)}</div>`;
+    const c = S.chan(cid);
+    return html`<div className="B-feed">
+      <div style=${{ position: 'sticky', top: 0, background: 'var(--bg)', padding: '6px 0', zIndex: 2 }}>
+        <div className="row"><h3 style=${{ margin: 0 }} className="grow"><${ChanName} c=${c} /></h3>${!S.isMember(c) ? html`<button className="primary" onClick=${() => S.join(c.id)}>Join</button>` : html`<button className="primary">+ New Thread</button>`}</div>
+        <${ChannelMeta} c=${c} S=${S} compact=${phone} /><${ListControls} S=${S} cid=${cid} />
+        <div className="small muted">${S.prefFor(cid).status === 'open' ? `${S.threads.filter(x => x.channel === cid && x.status === 'resolved').length} Resolved threads hidden` : ''}</div>
+      </div>
+      ${channelThreads(S, cid).map(t => html`<${Card} key=${t.id} t=${t} />`)}
+    </div>`;
+  };
+  const Side_ = ({ asList }) => html`<div className=${asList ? '' : 'B-side'} style=${asList ? { padding: 8 } : {}}>
+    ${!asList && html`<div className="row" style=${{ padding: '4px 8px 10px', color: '#fff' }}><b className="grow" style=${{ fontSize: 16 }}>Ping</b></div>`}
+    <div className=${'item' + (cid === 'todo' && !asList ? ' on' : '')} style=${asList ? { padding: 10, background: '#fff', border: '1px solid var(--line)', borderRadius: 10, marginBottom: 8 } : {}} onClick=${() => { setCid('todo'); setOpenId(null); if (asList) setScreen('channel'); }}>☑ <span className="grow">To Do</span><span className="badge grey">${S.todo.length}</span></div>
+    <h4 style=${asList ? { color: 'var(--muted)' } : {}}>Channels</h4>
+    ${S.channels.filter(c => S.isMember(c)).map(c => html`<div key=${c.id} className=${'item' + (cid === c.id && !asList ? ' on' : '') + (S.pingsIn(c.id) ? ' has' : '')} style=${asList ? { padding: 10, background: '#fff', border: '1px solid var(--line)', borderRadius: 10, marginBottom: 6 } : {}} onClick=${() => { setCid(c.id); setOpenId(null); if (asList) setScreen('channel'); }}>
+      <span className="grow ellipsis"><${ChanName} c=${c} /></span>${S.pingsIn(c.id) > 0 && html`<span className=${'badge' + (c.muted ? ' grey' : '')}>${S.pingsIn(c.id)}</span>`}</div>`)}
+    <${JoinList} S=${S} onOpen=${id => { setCid(id); if (asList) setScreen('channel'); }} />
+  </div>`;
+  const BellBtn_ = () => html`<button onClick=${() => phone ? setScreen('pings') : setBell(b => !b)} style=${{ position: 'relative' }}>🔔 ${S.pinged.length > 0 && html`<span className="badge">${S.pinged.length}</span>`}</button>`;
+
+  const InlineAck = useStable(InlineAck_);
+  const Card = useStable(Card_);
+  const Panel = useStable(Panel_);
+  const PingsList = useStable(PingsList_);
+  const Feed = useStable(Feed_);
+  const Side = useStable(Side_);
+  const BellBtn = useStable(BellBtn_);
+  if (phone) {
+    if (screen === 'search') return html`<${Search} S=${S} full autoOpen onClose=${() => setScreen('home')} onOpenThread=${openThread} onOpenChannel=${id => { setCid(id); setScreen('channel'); }} />`;
+    if (screen === 'thread' && t) return html`<${Panel} />`;
+    return html`<div style=${{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div className="phone-head">${screen !== 'home' && html`<button className="ghost" onClick=${() => setScreen('home')}>‹</button>`}<h3 className="grow">${screen === 'home' ? 'Ping' : screen === 'pings' ? 'Pings' : cid === 'todo' ? 'To Do' : ''}</h3><button className="ghost" onClick=${() => setScreen('search')}>🔍</button><${BellBtn} /></div>
+      <div className="phone-body">${screen === 'home' ? html`<${Side} asList />` : screen === 'pings' ? html`<div style=${{ background: '#fff' }}><${PingsList} /></div>` : html`<${Feed} />`}</div>
+    </div>`;
+  }
+  return html`<div className="B-grid">
+    <${Side} />
+    <div className="B-main">
+      <div className="B-top"><${Search} S=${S} contextChannel=${cid !== 'todo' ? cid : null} onOpenThread=${openThread} onOpenChannel=${setCid} /><span className="grow"></span><${BellBtn} /><${Avatar} who=${ME} /></div>
+      ${bell && html`<div className="B-drop"><div className="row" style=${{ padding: '8px 10px', borderBottom: '1px solid var(--line)' }}><b className="grow">Pings</b><span className="small muted">opening one does not clear it</span></div><${PingsList} /></div>`}
+      <div className="scroll" style=${{ flex: 1 }}><${Feed} /></div>
+      <${Panel} />
+    </div>
+  </div>`;
+}
+
+/* ================================================================== Variant C: focus queue, one Ping at a time */
+function VariantC({ phone }) {
+  const S = useApp();
+  const [tab, setTab] = useState('queue'); // queue | todo | channels | search
+  const [curId, setCurId] = useState(null);
+  const [cid, setCid] = useState(null);
+  const [openId, setOpenId] = useState(null); // non-queue Thread view
+  const [skipped, setSkipped] = useState([]);
+  const [respond, setRespond] = useState(0);
+  const queue = S.pinged.slice().sort((a, b) => skipped.indexOf(a.id) - skipped.indexOf(b.id));
+  const cur = (curId && queue.find(x => x.id === curId)) || queue[0];
+  const idx = cur ? queue.indexOf(cur) : -1;
+  const next = () => { const n = queue[idx + 1] || queue[0]; setCurId(n && n.id !== cur.id ? n.id : null); };
+  const actAndNext = (fn) => { const n = queue[idx + 1]; fn(); setCurId(n ? n.id : null); };
+  const Actions_ = ({ t, inQueue }) => phone ? html`<div className="C-phone-actions">
+      <button onClick=${() => inQueue ? actAndNext(() => S.markRead(t.id)) : S.markRead(t.id)}><span style=${{ fontSize: 18 }}>✓</span>Mark read</button>
+      <button onClick=${() => inQueue ? actAndNext(() => S.react(t.id)) : S.react(t.id)}><span style=${{ fontSize: 18 }}>👍</span>React</button>
+      <button onClick=${() => inQueue ? actAndNext(() => S.addTodo(t.id)) : (t.todo ? S.doneTodo(t.id) : S.addTodo(t.id))}><span style=${{ fontSize: 18 }}>☐</span>${t.todo && !inQueue ? 'Done' : 'To Do'}</button>
+      <button onClick=${() => setRespond(x => x + 1)}><span style=${{ fontSize: 18 }}>↩</span>Respond</button>
+    </div>` : html`<div className="C-actions">
+      <button className="big" onClick=${() => inQueue ? actAndNext(() => S.markRead(t.id)) : S.markRead(t.id)}>✓ Mark read${inQueue ? ' & next' : ''}</button>
+      <button className="big" onClick=${() => inQueue ? actAndNext(() => S.react(t.id)) : S.react(t.id)}>👍 React${inQueue ? ' & next' : ''}</button>
+      <button className="big" onClick=${() => inQueue ? actAndNext(() => S.addTodo(t.id)) : (t.todo ? S.doneTodo(t.id) : S.addTodo(t.id))}>${t.todo && !inQueue ? '☑ Done' : '☐ To Do' + (inQueue ? ' & next' : '')}</button>
+      <button className="big primary" onClick=${() => setRespond(x => x + 1)}>↩ Respond</button>
+    </div>`;
+  const Focus_ = ({ t, inQueue }) => html`<div className=${phone ? '' : 'C-card'} style=${phone ? { padding: 12, background: '#fff' } : {}}>
+    ${inQueue && html`<div className="row small muted" style=${{ marginBottom: 6 }}><span className="grow">Ping ${idx + 1} of ${queue.length}</span><button className="small" onClick=${() => { setSkipped(s => [...s.filter(x => x !== t.id), t.id]); next(); }}>Skip (stays a Ping) →</button></div>`}
+    ${!inQueue && html`<button className="ghost small" onClick=${() => setOpenId(null)}>‹ Back</button>`}
+    <${ThreadHeader} t=${t} S=${S} compact=${phone} />
+    ${!phone && html`<${Actions} t=${t} inQueue=${inQueue} />`}
+    <${ThreadBody} key=${t.id} t=${t} S=${S} onlyNewPlusContext=${inQueue} />
+    ${(respond > 0 || !phone) && html`<div style=${{ marginTop: 10 }}><${Composer} key=${t.id + respond} autoFocus=${respond > 0} compact=${phone} onSend=${(x, f) => { inQueue ? actAndNext(() => S.respond(t.id, x, f)) : S.respond(t.id, x, f); setRespond(0); }} /></div>`}
+  </div>`;
+  const Done_ = () => html`<div className=${phone ? '' : 'C-card'} style=${{ textAlign: 'center', padding: 40 }}><div style=${{ fontSize: 40 }}>✓</div><h2>All Pings acknowledged</h2><div className="muted">Next: your To Do (${S.todo.length})</div><button style=${{ marginTop: 12 }} onClick=${() => setTab('todo')}>Open To Do</button></div>`;
+  const TodoList_ = () => html`<div className="card-list" style=${{ maxWidth: 760, margin: '0 auto' }}>${S.todo.map(t => html`<div key=${t.id} className="li" onClick=${() => setOpenId(t.id)}>
+    <div className="row"><input type="checkbox" title="Mark done" onClick=${e => { e.stopPropagation(); S.doneTodo(t.id); }} /><b className="grow ellipsis">${t.title}</b>${t.pings > 0 && html`<span className="badge">${t.pings}</span>`}</div>
+    <div className="small muted"><${ChanName} c=${S.chan(t.channel)} /> · ${t.at}</div></div>`)}${!S.todo.length && html`<div className="muted">Your To Do is empty.</div>`}</div>`;
+  const Channels_ = () => {
+    const c = cid && S.chan(cid);
+    const list = html`<div className="card-list">${S.channels.filter(S.isMember).map(c => html`<div key=${c.id} className="li row" onClick=${() => setCid(c.id)}><span className="grow"><${ChanName} c=${c} /><div className="small muted">${c.desc}</div></span>${S.pingsIn(c.id) > 0 && html`<span className=${'badge' + (c.muted ? ' grey' : '')}>${S.pingsIn(c.id)}</span>`}</div>`)}<${JoinList} S=${S} onOpen=${setCid} /></div>`;
+    const view = c && html`<div>
+      ${phone && html`<button className="ghost small" onClick=${() => setCid(null)}>‹ Channels</button>`}
+      <h3 style=${{ margin: '4px 0' }}><${ChanName} c=${c} /></h3><${ChannelMeta} c=${c} S=${S} compact=${phone} /><${ListControls} S=${S} cid=${c.id} />
+      <div className="card-list">${channelThreads(S, c.id).map(t => html`<div key=${t.id} className="li" onClick=${() => setOpenId(t.id)}><div className="row"><b className="grow ellipsis">${t.system ? '⚙ ' : ''}${t.title}</b>${t.pings > 0 && html`<span className="badge">${t.pings}</span>`}</div><div className="small muted ellipsis">${t.responses.length} Responses · ${t.at} ${t.status === 'resolved' ? '· Resolved' : ''}</div></div>`)}</div>
+    </div>`;
+    if (phone) return html`<div style=${{ padding: 12 }}>${c ? view : list}</div>`;
+    return html`<div style=${{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 20, maxWidth: 1100, margin: '0 auto' }}>${list}<div>${view || html`<div className="muted">Pick a Channel.</div>`}</div></div>`;
+  };
+  const Actions = useStable(Actions_);
+  const Focus = useStable(Focus_);
+  const Done = useStable(Done_);
+  const TodoList = useStable(TodoList_);
+  const Channels = useStable(Channels_);
+  const open = openId && S.thread(openId);
+  const seg = html`<div className="C-seg">${[['queue', `Pings ${queue.length}`], ['todo', `To Do ${S.todo.length}`], ['channels', 'Channels']].map(([k, l]) => html`<button key=${k} className=${tab === k ? 'on' : ''} onClick=${() => { setTab(k); setOpenId(null); }}>${l}</button>`)}</div>`;
+  const content = open ? html`<${Focus} t=${open} inQueue=${false} />`
+    : tab === 'queue' ? (cur ? html`<${Focus} t=${cur} inQueue=${true} />` : html`<${Done} />`)
+    : tab === 'todo' ? html`<${TodoList} />` : html`<${Channels} />`;
+  const focusT = open || (tab === 'queue' && cur);
+
+  if (phone) {
+    if (tab === 'search') return html`<${Search} S=${S} full autoOpen onClose=${() => setTab('queue')} onOpenThread=${id => { setOpenId(id); setTab('channels'); }} onOpenChannel=${id => { setCid(id); setTab('channels'); }} />`;
+    return html`<div style=${{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div className="phone-head">${seg}<span className="grow"></span><button className="ghost" onClick=${() => setTab('search')}>🔍</button></div>
+      <div className="phone-body">${content}</div>
+      ${focusT && html`<${Actions} t=${focusT} inQueue=${!open} />`}
+    </div>`;
+  }
+  return html`<div className="C-wrap">
+    <div className="C-top"><b style=${{ fontSize: 16 }}>Ping</b>${seg}<${Search} S=${S} contextChannel=${cid} onOpenThread=${id => setOpenId(id)} onOpenChannel=${id => { setCid(id); setTab('channels'); setOpenId(null); }} /><${Avatar} who=${ME} /></div>
+    ${tab === 'queue' && !open ? html`<div className="C-body">
+      <div className="C-queue"><div className="small muted" style=${{ padding: '8px 12px' }}>Up next</div>${queue.map((t, i) => html`<div key=${t.id} className=${'q' + (cur && t.id === cur.id ? ' on' : '')} onClick=${() => setCurId(t.id)}><div className="row"><span className="grow ellipsis">${t.title}</span><span className="badge">${t.pings}</span></div><div className="small muted"><${ChanName} c=${S.chan(t.channel)} />${t.mention ? ' · @You' : ''}${skipped.includes(t.id) ? ' · skipped' : ''}</div></div>`)}</div>
+      <div className="C-focus">${content}</div>
+    </div>` : html`<div className="C-focus" style=${{ flex: 1 }}>${content}</div>`}
+  </div>`;
+}
+
+/* ------------------------------------------------------------------ prototype shell */
+const VARIANTS = [
+  { key: 'A', name: 'Three-pane triage', C: VariantA },
+  { key: 'B', name: 'Channel-first, Pings in a bell', C: VariantB },
+  { key: 'C', name: 'Focus queue, one Ping at a time', C: VariantC },
+];
+function getParam(k, d) { return new URLSearchParams(location.search).get(k) || d; }
+function setParam(k, v) { const u = new URL(location.href); u.searchParams.set(k, v); history.replaceState(null, '', u); }
+function App() {
+  const S = useAppState();
+  const [v, setV] = useState(getParam('variant', 'A'));
+  const [frame, setFrame] = useState(getParam('frame', 'laptop'));
+  const i = Math.max(0, VARIANTS.findIndex(x => x.key === v));
+  const go = (d) => { const n = VARIANTS[(i + d + VARIANTS.length) % VARIANTS.length].key; setV(n); setParam('variant', n); };
+  useEffect(() => {
+    const h = (e) => { if (e.target.closest('input,textarea,select,[contenteditable]')) return; if (e.key === 'ArrowLeft') go(-1); if (e.key === 'ArrowRight') go(1); };
+    window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h);
+  });
+  const V = VARIANTS[i];
+  const phone = frame === 'phone';
+  const body = html`<${V.C} key=${V.key + frame} phone=${phone} />`;
+  return html`<${Ctx.Provider} value=${S}>
+    ${phone ? html`<div className="stage-phone-wrap"><div className="stage-phone">${body}</div></div>` : html`<div className="stage-laptop">${body}</div>`}
+    ${S.toast && html`<div className="toast">${S.toast}</div>`}
+    <div className="proto-bar">
+      <button onClick=${() => go(-1)}>←</button>
+      <span><b>${V.key}</b> (${V.name})</span>
+      <button onClick=${() => go(1)}>→</button>
+      <span style=${{ color: '#aaa' }}>state: Pings ${S.pinged.length} · To Do ${S.todo.length}</span>
+      <span className="proto-frame">${['laptop', 'phone'].map(f => html`<button key=${f} className=${frame === f ? 'on' : ''} onClick=${() => { setFrame(f); setParam('frame', f); }}>${f === 'laptop' ? '💻 Laptop' : '📱 Phone'}</button>`)}</span>
+    </div>
+  <//>`;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(html`<${App} />`);
+</script>
+</body>
+</html>
