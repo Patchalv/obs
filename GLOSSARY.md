@@ -12,7 +12,7 @@ A person employed by Spark who can sign in. Includes owners, teachers, administr
 _Avoid_: Employee, account, personal
 
 **Admin**:
-A Staff member who manages Staff members for all of Spark. Admins see only the Private channels they are members of.
+A Staff member who manages Staff members for all of Spark and can edit or delete any Thread or Response in the Channels they can see. Admins see only the Private channels they are members of.
 _Avoid_: Coordinator, COORD, superuser
 
 **Member**:
@@ -35,14 +35,14 @@ A Channel that any Staff member can find and view.
 A Channel that only its members can find and view.
 
 **Channel member**:
-A Staff member who belongs to a Channel. Anyone can join a Public channel. Channel admins add Staff members to a Private channel.
+A Staff member who belongs to a Channel. Anyone can join a Public channel and add others to it. Only Channel admins add Staff members to a Private channel. Anyone can leave a Channel, except its last active Channel admin.
 
 **Archived channel**:
-A Channel that is closed to new activity but can still be found and read by its Channel members.
+A Channel that is closed to new activity but can still be found and read by its Channel members. Channels are archived, never deleted.
 _Avoid_: Deleted channel
 
 **Channel admin**:
-A member of a Channel who may change that Channel. A Channel has one or more.
+A member of a Channel who may change its name, description, visibility, settings and members. A Channel always has at least one active Channel admin. Channel admins do not moderate other people's Threads or Responses.
 _Avoid_: Owner, responsable
 
 **Thread**:
@@ -50,7 +50,7 @@ A sub-topic inside a Channel, started by a post that has a title and a descripti
 _Avoid_: Post, seguimiento, ticket
 
 **System thread**:
-A Thread that Ping itself starts to announce a change to a Channel, such as a new Channel admin. Nobody can respond as its author.
+A Thread that Ping itself starts to announce a change to a Channel, such as a new Channel admin or a switch between Public and Private. Nobody can respond as its author.
 _Avoid_: Bot post, automatic message
 
 **Response**:
