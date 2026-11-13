@@ -12,11 +12,15 @@ A person employed by Spark who can sign in. Includes owners, teachers, administr
 _Avoid_: Employee, account, personal
 
 **Admin**:
-A Staff member who manages Staff members for all of Spark and can edit or delete any Thread or Response in the Channels they can see. Admins see only the Private channels they are members of.
+A Staff member who invites, Deactivates and sets the role of Staff members for all of Spark, and can edit or delete any Thread or Response in the Channels they can see. Admins see only the Private channels they are members of. Spark always has at least one active Admin.
 _Avoid_: Coordinator, COORD, superuser
 
 **Member**:
 Any Staff member who is not an Admin.
+
+**Invited**:
+The state of a Staff member an Admin has invited who has not yet set a password. Only Admins see them, in the list of Staff members, and they can't be added to Channels or mentioned until they join. Cancelling an invite removes them entirely, because they have written nothing.
+_Avoid_: Pending, unconfirmed
 
 **Deactivated**:
 The state of a Staff member who can no longer sign in. Everything they wrote is kept and they stay listed in their Channels, but they no longer appear when people are being picked, and their To Do and Pings are discarded.
