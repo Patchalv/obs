@@ -13,7 +13,7 @@ Use the terms in [`GLOSSARY.md`](../../GLOSSARY.md) everywhere: in code, issues,
 | [data-model.md](data-model.md) | Tables, constraints, indexes and the clean-up rules. |
 | [permissions.md](permissions.md) | Who can do what (the server layer), and how Postgres row-level security backs it up (the database layer). |
 | [platform.md](platform.md) | Stack, domains, email, environments, deploys, secrets, backups, monitoring, baseline security, cost and GDPR. |
-| [testing.md](testing.md) | Testing strategy, the rules every build slice follows, and what the first build slice owes. |
+| [testing.md](testing.md) | Testing strategy, the rules every build slice follows, and what the foundation slices owe. |
 | [go-live.md](go-live.md) | The checklist that must be complete before real Spark data goes in. |
 
 ## Governing principles
@@ -65,11 +65,11 @@ These were raised with Patrick while this spec was being written ([Write Ping's 
 - **Non-members of a Public channel** can read and Acknowledge, but must join before they start a Thread, send a Thread Response or react.
 - **Profiles.** Every Staff member can change their own display name and upload their own profile photo. Only Admins change someone's email.
 - **Ping fan-out runs as `ping_system`.** `ping_app` can only touch a Staff member's own Ping, Saved and mute rows, so creating and bumping other people's Pings runs through the system-actions module after the server has authorised the post. Recorded as an amendment to [ADR 0004](../adr/0004-rls-roles-and-staff-member-table.md).
-- **`docs/testing.md`** is written by the first build slice, once test commands exist. The strategy it will hold is in [testing.md](testing.md).
+- **`docs/testing.md`** is written by the foundation slice [Database, RLS backbone and sign-in](https://github.com/Patchalv/ping/issues/29), once test commands exist. The strategy it will hold is in [testing.md](testing.md).
 
-## Assumptions to confirm
+## Confirmed assumptions
 
-These are implementation-level choices the tickets didn't make. The spec proposes an answer for each so the build can go ahead. Change any of them before the build plan is sliced if they're wrong.
+These are implementation-level choices the tickets didn't make. The spec proposed an answer for each, and Patrick confirmed them all before the build plan was sliced ([Slice the MVP spec into a vertical-slice build plan](https://github.com/Patchalv/ping/issues/18)).
 
 - **Table names** for Sections (`section`, `section_channel`), invites (`staff_invite`) and profile photos (`staff_avatar`), and the columns marking the Invited state on `staff_member`.
 - **Profile photos live in their own table** (`staff_avatar`), so no Staff member ever needs write access to their own `staff_member` row, which holds their role.

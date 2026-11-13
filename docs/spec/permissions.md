@@ -58,7 +58,7 @@ Terms used below:
 | Resolve, reopen | Any member, or only the author and Channel admins, per the Channel's setting |
 | Upload an Attachment | Whoever is posting, within the Spark-wide limits |
 | Download an Attachment ✱ | Anyone who can read the Thread |
-| Remove an Attachment ✱ *(proposed for Archived)* | Its uploader; Channel admin of that Channel; Admin in a Channel they can read |
+| Remove an Attachment ✱ | Its uploader; Channel admin of that Channel; Admin in a Channel they can read |
 | Respond as a System thread's author | Nobody |
 
 ### Personal
@@ -91,9 +91,9 @@ How the backstop works is recorded in [ADR 0004](../adr/0004-rls-roles-and-staff
 - **`ping_system`** has its own small pool and is used only by one system-actions module, for:
   - **Ping fan-out:** creating or bumping other people's Pings for a new Thread, Thread Response or Mention, after the server has authorised the post;
   - Deactivation clean-up, automatic Channel admin promotion and automatic archiving;
-  - the losing-access clean-up *(proposed; see [data-model.md](data-model.md#the-clean-up-routine))*;
-  - invite acceptance and `bootstrap-admin` *(proposed)*;
-  - the sweepers: file deletion, pending uploads, and `audit_event` retention *(proposed)*.
+  - the losing-access clean-up (see [data-model.md](data-model.md#the-clean-up-routine));
+  - invite acceptance and `bootstrap-admin`;
+  - the sweepers: file deletion, pending uploads, and `audit_event` retention.
 
   Policies allow `ping_system` explicitly (`TO ping_system USING (true)`), so it needs no BYPASSRLS attribute. This list is wider than the one first written in ADR 0004; see its amendment.
 
@@ -128,6 +128,6 @@ Search runs through the same policies.
 
 - `FORCE ROW LEVEL SECURITY` is added in raw SQL, because Drizzle doesn't emit it.
 - CI fails if `ping_app` or `ping_system` can bypass RLS, owns a table, or if any table outside the Better Auth allowlist lacks forced RLS or a policy (see [testing.md](testing.md#rls-as-its-own-layer)).
-- Neon doesn't document that `set_config(..., true)` works through its pooler. The first build slice proves it (see [testing.md](testing.md#what-the-first-build-slice-owes)).
+- Neon doesn't document that `set_config(..., true)` works through its pooler. The foundation slice [Staging and prod deploy pipeline](https://github.com/Patchalv/ping/issues/30) proves it (see [testing.md](testing.md#what-the-foundation-slices-owe)).
 
 Sources: [What is Ping's data model?](https://github.com/Patchalv/ping/issues/11#issuecomment-6861774289), and the [addendum on tables outside the visibility rule](https://github.com/Patchalv/ping/issues/16#issuecomment-6863848373).

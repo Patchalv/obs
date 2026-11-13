@@ -2,7 +2,7 @@
 
 A sketch of Ping's Postgres schema, not code. Drizzle defines it with SQL migrations. Row-level security and the database roles are in [permissions.md](permissions.md#database-layer-row-level-security).
 
-Source: [What is Ping's data model?](https://github.com/Patchalv/ping/issues/11#issuecomment-6861774289), plus the Sections table from [the screens ticket](https://github.com/Patchalv/ping/issues/8#issuecomment-6862576413), `audit_event` from [the deploy ticket](https://github.com/Patchalv/ping/issues/12#issuecomment-6862919205), and the invite flow from [the first-Admins ticket](https://github.com/Patchalv/ping/issues/15#issuecomment-6863586131). Tables marked *(proposed)* were named while writing this spec; see [Assumptions to confirm](README.md#assumptions-to-confirm).
+Source: [What is Ping's data model?](https://github.com/Patchalv/ping/issues/11#issuecomment-6861774289), plus the Sections table from [the screens ticket](https://github.com/Patchalv/ping/issues/8#issuecomment-6862576413), `audit_event` from [the deploy ticket](https://github.com/Patchalv/ping/issues/12#issuecomment-6862919205), and the invite flow from [the first-Admins ticket](https://github.com/Patchalv/ping/issues/15#issuecomment-6863586131). Some tables were named while writing this spec; see [Confirmed assumptions](README.md#confirmed-assumptions).
 
 ## Conventions
 
@@ -28,19 +28,19 @@ Source: [What is Ping's data model?](https://github.com/Patchalv/ping/issues/11#
 - `id`: primary key, and a foreign key to `user.id`, so the key is shared.
 - `role`: `admin` or `member`.
 - `created_at`.
-- `invited_by` → `staff_member` *(proposed)*.
-- `joined_at` *(proposed)*: null while Invited, set when the invite is accepted.
+- `invited_by` → `staff_member`.
+- `joined_at`: null while Invited, set when the invite is accepted.
 - `deactivated_at`, `deactivated_by` → `staff_member`.
 - Every person foreign key in Ping's own tables points here.
 - Created together with `user` in one transaction, by an invite.
 - A Better Auth session hook refuses sign-in to Deactivated Staff members. Deactivating deletes their sessions in the same transaction.
 
-**`staff_invite`** *(proposed)*
+**`staff_invite`**
 
 - `staff_id` (primary key) → `staff_member`, `token_hash`, `expires_at` (7 days), `created_by`, `created_at`, `email_failed_at`.
 - One live token per Invited person. Resend replaces the row; accepting deletes it. Cancelling deletes the `user`, `staff_member` and `staff_invite` rows.
 
-**`staff_avatar`** *(proposed)*
+**`staff_avatar`**
 
 - `staff_id` (primary key) → `staff_member`, `object_key` (random UUID, unique), `updated_at`.
 - One row per Staff member with a profile photo. It's a separate table so a Staff member can change their own photo without having any write access to their `staff_member` row, which holds their role.
@@ -75,11 +75,11 @@ Password-reset tokens use Better Auth's own `verification` table.
 
 ## Sidebar Sections
 
-**`section`** *(proposed name)*
+**`section`**
 
 - `id`, `staff_id`, `name`, `position`, `collapsed`, `created_at`.
 
-**`section_channel`** *(proposed name)*
+**`section_channel`**
 
 - `staff_id`, `channel_id`, `section_id` → `section`, `position`.
 - Primary key `(staff_id, channel_id)`.
@@ -164,11 +164,11 @@ Ping, Saved and mute rows belong to one Staff member, and `ping_app` can only to
 
 - `id`, `created_at`, `actor_id` (null for system actions and failed sign-ins), `kind`, `target` columns or a `jsonb` payload of IDs.
 - Never holds message bodies or email addresses. A failed sign-in records the matched Staff member's ID when there is one, and the request IP.
-- Kept for one year; a sweeper deletes older rows *(proposed)*.
+- Kept for one year; a sweeper deletes older rows.
 
 ## The clean-up routine
 
-One routine handles every way someone loses access. It deletes other people's Ping, Saved and mute rows, which `ping_app` can't touch, so it runs as `ping_system` through the system-actions module *(proposed)*:
+One routine handles every way someone loses access. It deletes other people's Ping, Saved and mute rows, which `ping_app` can't touch, so it runs as `ping_system` through the system-actions module:
 
 | Case | Pings | Saved | Mutes | Section placement |
 | --- | --- | --- | --- | --- |

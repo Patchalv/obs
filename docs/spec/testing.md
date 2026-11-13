@@ -1,6 +1,6 @@
 # Testing
 
-How agent-written code is tested, including both permission layers. This is the strategy. The **first build slice** turns it into `docs/testing.md`, once real test commands exist, and adds the test commands and a one-line pointer to `docs/testing.md` in `CLAUDE.md`. Every `ready-for-agent` issue in the build plan links `docs/testing.md` from its acceptance criteria.
+How agent-written code is tested, including both permission layers. This is the strategy. The foundation slice [Database, RLS backbone and sign-in](https://github.com/Patchalv/ping/issues/29) turns it into `docs/testing.md`, once real test commands exist, and adds the test commands and a one-line pointer to `docs/testing.md` in `CLAUDE.md`. Every `ready-for-agent` issue in the build plan links `docs/testing.md` from its acceptance criteria.
 
 Source: [How do we test agent-written code, including both permission layers?](https://github.com/Patchalv/ping/issues/16#issuecomment-6863779106) and its [addendum](https://github.com/Patchalv/ping/issues/16#issuecomment-6863848373).
 
@@ -74,13 +74,13 @@ The rules the matrix encodes are in [permissions.md](permissions.md#server-layer
 - **Agents never weaken the guards.** Unless the issue explicitly says to, an agent must not change an existing matrix or RLS expectation, or edit the catalog-guard allowlist or the route allowlist. Any such change is listed in the PR body under a **Permission changes** heading so Patrick reviews it by hand.
 - **CI gate:** every PR to `master` runs every suite: unit, integration and matrix, RLS and catalog, PgBouncer, route coverage and Playwright. Branch protection requires them all to pass before merge.
 
-## What the first build slice owes
+## What the foundation slices owe
 
-The first slice lays the foundations every later slice relies on:
+The foundation slices of the [Ping MVP build plan](https://github.com/Patchalv/ping/issues/21) lay the foundations every later slice relies on. [Repo, tooling and Claude Code setup](https://github.com/Patchalv/ping/issues/28) brings the monorepo, Vitest, the Postgres container and the CI workflow. [Database, RLS backbone and sign-in](https://github.com/Patchalv/ping/issues/29) brings the roles, RLS, both guards and the PgBouncer test. [Staging and prod deploy pipeline](https://github.com/Patchalv/ping/issues/30) brings the staging pipeline and the real-Neon smoke test. Together they owe:
 
 - the monorepo, Vitest, the Postgres container setup with template-database cloning, and the CI workflow;
 - the `ping_app` and `ping_system` roles, `FORCE ROW LEVEL SECURITY` in raw SQL, and the per-request transaction wrapper with `set_config('app.staff_id', …, true)`;
 - the catalog guard and the route-coverage guard;
 - the PgBouncer pooler test in CI;
-- the staging environment and deploy pipeline, with the **real-Neon pooler smoke test** gating promote. This is the proof [ADR 0004](../adr/0004-rls-roles-and-staff-member-table.md) says the first slice owes;
+- the staging environment and deploy pipeline, with the **real-Neon pooler smoke test** gating promote. This is the proof [ADR 0004](../adr/0004-rls-roles-and-staff-member-table.md) says the foundation slices owe;
 - `docs/testing.md` and the `CLAUDE.md` test commands and pointer.

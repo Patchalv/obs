@@ -95,7 +95,7 @@ Sources: [Who can do what in a Channel?](https://github.com/Patchalv/ping/issues
 - Archiving Pings nobody, apart from its System thread. Open Pings stay until they're Acknowledged.
 - In an Archived channel:
   - **Blocked:** new Threads, Thread Responses and reactions; edits; deletes by authors; Resolve and reopen; changing settings; adding, removing or promoting members; joining.
-  - **Still allowed:** reading and search; Acknowledging (mark read); Save; Mute; leaving; company Admins deleting Threads and Thread Responses; removing Attachments *(proposed, so personal data can always come down)*; unarchiving.
+  - **Still allowed:** reading and search; Acknowledging (mark read); Save; Mute; leaving; company Admins deleting Threads and Thread Responses; removing Attachments, so personal data can always come down; unarchiving.
 
 Source: decided while writing this spec.
 
@@ -290,7 +290,7 @@ Source: [What can search find in the MVP?](https://github.com/Patchalv/ping/issu
 
 ## Live updates
 
-- Each open browser holds one Server-Sent Events connection. It carries new Threads and Thread Responses, reactions, resolve and reopen, and Ping counts, filtered to what that Staff member can read. It also carries edits, deletions, membership changes and Channel changes *(proposed)*, so open screens stay correct.
+- Each open browser holds one Server-Sent Events connection. It carries new Threads and Thread Responses, reactions, resolve and reopen, and Ping counts, filtered to what that Staff member can read. It also carries edits, deletions, membership changes and Channel changes, so open screens stay correct.
 - Every user action is an ordinary request. The stream only pushes.
 - The server sends a heartbeat every 20–30 seconds. A client that reconnects resumes with `Last-Event-ID`; one that has fallen too far behind refetches.
 

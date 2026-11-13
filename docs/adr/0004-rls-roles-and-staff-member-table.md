@@ -34,7 +34,7 @@ ADR 0002 makes Postgres row-level security a backstop behind the server's permis
 
 - Two database credentials to store and rotate.
 - No transaction may stay open on a long-lived SSE stream.
-- Neon doesn't document that `set_config(..., true)` works through its pooler. The first build slice must prove it with a test.
+- Neon doesn't document that `set_config(..., true)` works through its pooler. The foundation slice [Staging and prod deploy pipeline](https://github.com/Patchalv/ping/issues/30) must prove it with a test.
 - Tests must exercise both permission layers, as ADR 0002 already requires.
 
 ## Amendment (2026-11-13): what `ping_system` does
