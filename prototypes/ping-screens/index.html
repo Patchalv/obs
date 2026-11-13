@@ -151,6 +151,34 @@
   .phone-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: #fff; border-bottom: 1px solid var(--line); min-height: 48px; }
   .phone-head h3 { margin: 0; font-size: 16px; }
   .phone-body { flex: 1; overflow: auto; min-height: 0; }
+
+  /* Variant B2 */
+  :root { --b2-grey: #f2f2f0; }
+  .B2-grid { display: grid; grid-template-columns: 260px 1fr; grid-template-rows: 44px 1fr; height: 100%; }
+  .B2-top { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; padding: 0 14px; background: #15181d; color: #fff; min-height: 44px; }
+  .B2-side { background: #22272e; color: #d7dade; padding: 10px 8px; overflow: auto; }
+  .B2-side .item { display: flex; gap: 8px; align-items: center; padding: 4px 10px; border-radius: 6px; cursor: pointer; }
+  .B2-side .item:hover { background: #2f353d; }
+  .B2-side .item.on, .B2-side .item.on.has { background: #e8ecf3; color: #15181d; }
+  .B2-side .item.has { color: #fff; font-weight: 700; }
+  .B2-side.phone .item { padding: 9px 12px; font-size: 15px; }
+  .B2-hr { height: 1px; background: #343a42; margin: 8px 4px; }
+  .B2-sec { border-radius: 8px; padding: 2px 0 6px; }
+  .B2-sec.over { background: #2f3a4a; outline: 1px dashed #6a8bd8; }
+  .B2-sechead { padding: 4px 10px; font-size: 13px; color: #9aa1aa; cursor: pointer; user-select: none; }
+  .B2-sechead:hover { color: #fff; }
+  .B2-empty { font-size: 12px; color: #6b727b; padding: 2px 26px; font-style: italic; }
+  .B2-chanbar { background: #fff; border-bottom: 1px solid var(--line); padding: 10px 18px 0; position: sticky; top: 0; z-index: 5; }
+  .B2-tabs { gap: 14px; margin-top: 6px; border-bottom: 1px solid var(--line); }
+  .B2-tab { padding: 6px 2px; font-size: 13px; color: var(--muted); border-bottom: 2px solid transparent; }
+  .B2-tab.on { color: var(--text); border-bottom-color: var(--text); font-weight: 600; }
+  .B2-tabs select { font-size: 12px; border: 1px solid var(--line); border-radius: 6px; }
+  .B2-feed { padding: 12px 18px 80px; }
+  .B2-row { display: flex; gap: 10px; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; }
+  .B2-row:hover { border-color: #c9c8c2; }
+  .B2-row.hasping { box-shadow: inset 3px 0 0 var(--ping); }
+  .B2-row.on { border-color: var(--accent); }
+  .B2-replies { color: var(--accent); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -176,6 +204,13 @@ const CHANNELS = [
   { id: 'owners', name: 'owners', desc: 'Owners only.', private: true, members: ['ana','cam'], admins: ['ana'], muted: false, resolveWho: 'Thread author' },
   { id: 'ana-cam', name: 'Ana & Cam', desc: '1:1', private: true, members: ['ana','cam'], admins: ['ana','cam'], muted: false, resolveWho: 'Anyone in the Channel' },
   { id: 'lost-property', name: 'lost-property', desc: 'Things left behind in classrooms.', private: false, members: ['ana','ben'], admins: ['ben'], muted: false, resolveWho: 'Anyone in the Channel' },
+  { id: 'teaching-b1', name: 'teaching-b1', desc: 'B1 classes: cover, materials, progress.', private: false, members: ['ana','ben','cam'], admins: ['ana'], muted: false, resolveWho: 'Anyone in the Channel' },
+  { id: 'teaching-c1', name: 'teaching-c1', desc: 'C1 classes.', private: false, members: ['ana','cam'], admins: ['ana'], muted: false, resolveWho: 'Anyone in the Channel' },
+  { id: 'teachers-room', name: 'teachers-room', desc: 'Anything for all teachers.', private: false, members: ['ana','ben','cam','eli'], admins: ['ana'], muted: false, resolveWho: 'Anyone in the Channel' },
+  { id: 'hr-notices', name: 'hr-notices', desc: 'Holidays, payroll dates, policies.', private: false, members: ['ana','ben','cam','eli'], admins: ['ana'], muted: false, resolveWho: 'Anyone in the Channel' },
+  { id: 'cleaning-rota', name: 'cleaning-rota', desc: 'Who cleans what, when.', private: false, members: ['ben','eli'], admins: ['ana'], muted: false, resolveWho: 'Anyone in the Channel' },
+  { id: 'events', name: 'events', desc: 'Social events and open days.', private: false, members: ['ana','eli'], admins: ['ana'], muted: false, resolveWho: 'Anyone in the Channel' },
+  { id: 'marketing', name: 'marketing', desc: 'Ads, brochures, social media.', private: false, members: ['ana'], admins: ['ana'], muted: false, resolveWho: 'Anyone in the Channel' },
 ];
 let rid = 100;
 const R = (author, at, body, extra = {}) => ({ id: 'r' + (rid++), author, at, body, attachments: [], reactions: [], ...extra });
@@ -396,7 +431,7 @@ function ChannelMeta({ c, S, compact }) {
     ${' '}<button className="ghost small" onClick=${() => S.muteChannel(c.id)}>${c.muted ? 'Unmute Channel' : 'Mute Channel'}</button>
   </div>`;
 }
-function Search({ S, contextChannel, onOpenThread, onOpenChannel, full, autoOpen, onClose }) {
+function Search({ S, contextChannel, onOpenThread, onOpenChannel, full, autoOpen, onClose, dark }) {
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(!!autoOpen);
   const [inC, setInC] = useState('');
@@ -424,7 +459,7 @@ function Search({ S, contextChannel, onOpenThread, onOpenChannel, full, autoOpen
   </div>`;
   if (full) return panel;
   return html`<div className="search grow" ref=${box} style=${{ maxWidth: 560 }}>
-    <input placeholder=${contextChannel ? `Search Ping (try In: #${S.chan(contextChannel).name})` : 'Search Ping'} value=${q} onFocus=${() => setOpen(true)} onInput=${e => setQ(e.target.value)} />
+    <input style=${dark ? { background: '#3a3f47', border: '1px solid #4a5059', color: '#fff' } : {}} placeholder=${contextChannel ? `Search Ping (try In: #${S.chan(contextChannel).name})` : 'Search Ping'} value=${q} onFocus=${() => setOpen(true)} onInput=${e => setQ(e.target.value)} />
     ${open && panel}
   </div>`;
 }
@@ -690,17 +725,167 @@ function VariantC({ phone }) {
   </div>`;
 }
 
+/* ================================================================== Variant B2: B revised after Patrick's feedback
+   Dark top bar + dark sidebar (Slack-like). Main area = per-Channel white Channel bar, grey Thread feed below.
+   Sidebar shows only Channels you're in, grouped into your own Sections (drag Channels between them).
+   Public channels you haven't joined are found only through search or "Browse channels". */
+function VariantB2({ phone }) {
+  const S = useApp();
+  const [view, setView] = useState('ch:front-desk'); // pings | todo | browse | ch:<id>
+  const [openId, setOpenId] = useState(null);
+  const [screen, setScreen] = useState('home'); // phone: home | main | thread | search
+  const [sections, setSections] = useState([
+    { id: 's-admin', name: 'Front office', collapsed: false, channels: ['front-desk', 'owners', 'hr-notices'] },
+    { id: 's-teach', name: 'Teaching', collapsed: false, channels: ['teaching-b1', 'teaching-c1', 'teachers-room'] },
+    { id: 's-tours', name: 'Tours', collapsed: false, channels: ['tours-ops'] },
+    { id: 's-build', name: 'Building', collapsed: true, channels: ['maintenance'] },
+  ]);
+  const [drag, setDrag] = useState(null);
+  const [overSec, setOverSec] = useState(null);
+  const cid = view.startsWith('ch:') ? view.slice(3) : null;
+  const t = openId && S.thread(openId);
+  const mine = S.channels.filter(S.isMember);
+  const sorted = new Set(sections.flatMap(s => s.channels));
+  const unsorted = mine.filter(c => !sorted.has(c.id)).map(c => c.id);
+  const allSections = [...sections.map(s => ({ ...s, channels: s.channels.filter(id => mine.some(c => c.id === id)) })), { id: 's-default', name: 'Channels', collapsed: false, channels: unsorted, isDefault: true }];
+  const moveTo = (chId, secId) => setSections(ss => ss.map(s => ({ ...s, channels: s.id === secId ? [...s.channels.filter(x => x !== chId), chId] : s.channels.filter(x => x !== chId) })));
+  const sectionOf = (chId) => (sections.find(s => s.channels.includes(chId)) || { id: 's-default' }).id;
+  const newSection = () => { const n = prompt('Name the new Section (only you see it)', 'HR'); if (n) setSections(ss => [...ss, { id: 's' + Math.random(), name: n, collapsed: false, channels: [] }]); };
+  const toggle = (secId) => setSections(ss => ss.map(s => s.id === secId ? { ...s, collapsed: !s.collapsed } : s));
+  const go = (v) => { setView(v); setOpenId(null); if (phone) setScreen('main'); };
+  const openThread = (id) => { setOpenId(id); if (phone) setScreen('thread'); };
+
+  const InlineAck_ = ({ t }) => html`<div className="inline-ack" onClick=${e => e.stopPropagation()}>
+    <button className="small" title="Mark read" disabled=${!t.pings} onClick=${() => S.markRead(t.id)}>✓</button>
+    <button className="small" title="React 👍" onClick=${() => S.react(t.id)}>👍</button>
+    <button className="small" title=${t.todo ? 'Done' : 'Add to To Do'} onClick=${() => t.todo ? S.doneTodo(t.id) : S.addTodo(t.id)}>${t.todo ? '☑' : '☐'}</button>
+  </div>`;
+  const Row_ = ({ t, showChan }) => {
+    const last = t.responses[t.responses.length - 1];
+    return html`<div className=${'B2-row' + (t.pings ? ' hasping' : '') + (t.id === openId ? ' on' : '')} onClick=${() => openThread(t.id)}>
+      <${Avatar} who=${t.author} size=${32} />
+      <div className="grow">
+        <div className="row small"><${Name} who=${t.author} /><span className="muted">${t.at}</span>${showChan && html`<span className="muted">in <${ChanName} c=${S.chan(t.channel)} /></span>`}<span className="grow"></span>${!phone && html`<${InlineAck} t=${t} />`}</div>
+        <div style=${{ fontWeight: 700, margin: '2px 0', fontSize: 15 }}>${t.title} ${t.status === 'resolved' && html`<span className="pill resolved">Resolved</span>`}</div>
+        <div className="small" style=${phone ? { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } : {}}><${Rich} text=${t.body} /></div>
+        <${Attachments} list=${t.attachments.slice(0, phone ? 1 : 3)} />
+        <div className="row small" style=${{ marginTop: 6, flexWrap: 'wrap' }}>
+          <span className="B2-replies">${t.responses.length} Responses</span>
+          ${t.pings > 0 && html`<span className="pill new">${t.pings} new</span>`}${t.mention && t.pings ? html`<span className="mention">@You</span>` : ''}${t.todo ? html`<span className="pill">☑ To Do</span>` : ''}${t.mutedThread ? '🔕' : ''}
+          ${last && !phone && html`<span className="muted grow ellipsis">Latest ${last.at}: ${PEOPLE[last.author].name.split(' ')[0]}: ${last.body}</span>`}
+        </div>
+        ${phone && html`<div style=${{ marginTop: 6 }}><${InlineAck} t=${t} /></div>`}
+      </div>
+    </div>`;
+  };
+  const Panel_ = () => t && html`<div className=${phone ? '' : 'B-panel'} style=${phone ? { display: 'flex', flexDirection: 'column', height: '100%', background: '#fff' } : {}}>
+    <div style=${{ padding: '10px 14px', borderBottom: '1px solid var(--line)' }}>
+      <div className="row"><button className="ghost" onClick=${() => { setOpenId(null); if (phone) setScreen('main'); }}>${phone ? '‹ Back' : '✕'}</button><b className="grow">Thread</b>
+        <button onClick=${() => S.markRead(t.id)} disabled=${!t.pings}>✓ Read</button><button onClick=${() => S.react(t.id)}>👍</button>
+        <button onClick=${() => t.todo ? S.doneTodo(t.id) : S.addTodo(t.id)}>${t.todo ? '☑ Done' : '☐ To Do'}</button></div>
+      <${ThreadHeader} t=${t} S=${S} compact />
+    </div>
+    <div className="scroll" style=${{ flex: 1, padding: '8px 14px' }}><${ThreadBody} t=${t} S=${S} /></div>
+    <div style=${{ padding: 8, borderTop: '1px solid var(--line)' }}><${Composer} key=${t.id} compact=${phone} onSend=${(x, f) => S.respond(t.id, x, f)} /></div>
+  </div>`;
+  const ChannelBar_ = ({ c }) => {
+    const hidden = S.threads.filter(x => x.channel === c.id && x.status === 'resolved').length;
+    return html`<div className="B2-chanbar">
+      <div className="row">
+        ${phone && html`<button className="ghost" onClick=${() => setScreen('home')}>‹</button>`}
+        <h2 className="grow ellipsis" style=${{ margin: 0, fontSize: phone ? 17 : 19 }}><${ChanName} c=${c} /></h2>
+        ${!phone && html`<span className="small muted" title=${c.members.map(m => PEOPLE[m].name + (PEOPLE[m].deactivated ? ' (Deactivated)' : '')).join(', ')}>👤 ${c.members.length}</span>`}
+        ${S.isMember(c) ? html`<button className="small" onClick=${() => S.muteChannel(c.id)}>${c.muted ? '🔕 Muted' : '🔔'}</button>` : html`<button className="primary" onClick=${() => S.join(c.id)}>Join Channel</button>`}
+        ${S.isMember(c) && html`<button className="primary">+ ${phone ? 'Thread' : 'New Thread'}</button>`}
+      </div>
+      ${!phone && html`<div className="small muted ellipsis" style=${{ marginTop: 2 }}>${c.desc}</div>`}
+      <div className="row B2-tabs">
+        <span className="B2-tab on">Threads</span>
+        ${!phone && html`<span className="B2-tab">Files</span><span className="B2-tab">Members</span>`}
+        <span className="grow"></span>
+        ${S.isMember(c) && !phone && html`<span className="small muted">Section: <select value=${sectionOf(c.id)} onChange=${e => moveTo(c.id, e.target.value)}>${allSections.map(s => html`<option key=${s.id} value=${s.id}>${s.name}</option>`)}</select></span>`}
+      </div>
+      <div className="row" style=${{ flexWrap: 'wrap' }}><${ListControls} S=${S} cid=${c.id} />${S.prefFor(c.id).status === 'open' && hidden > 0 && html`<span className="small muted">${hidden} Resolved hidden</span>`}</div>
+    </div>`;
+  };
+  const SimpleBar_ = ({ title, sub }) => html`<div className="B2-chanbar"><div className="row">${phone && html`<button className="ghost" onClick=${() => setScreen('home')}>‹</button>`}<h2 className="grow" style=${{ margin: 0, fontSize: phone ? 17 : 19 }}>${title}</h2></div><div className="small muted">${sub}</div></div>`;
+  const Main_ = () => {
+    if (view === 'pings') return html`<${SimpleBar} title="Pings" sub="Threads with new activity for you. Opening one does not clear it." /><div className="B2-feed">${S.pinged.map(t => html`<${Row} key=${t.id} t=${t} showChan />`)}${!S.pinged.length && html`<div className="muted" style=${{ padding: 20 }}>All Pings acknowledged.</div>`}</div>`;
+    if (view === 'todo') return html`<${SimpleBar} title="To Do" sub="Your personal list. Threads here still get Pings." /><div className="B2-feed">${S.todo.map(t => html`<${Row} key=${t.id} t=${t} showChan />`)}</div>`;
+    if (view === 'browse') return html`<${Browse} />`;
+    const c = S.chan(cid);
+    return html`<${ChannelBar} c=${c} /><div className="B2-feed">${channelThreads(S, cid).map(t => html`<${Row} key=${t.id} t=${t} />`)}${!channelThreads(S, cid).length && html`<div className="muted" style=${{ padding: 20 }}>No Threads match.</div>`}</div>`;
+  };
+  const Browse_ = () => {
+    const [q, setQ] = useState('');
+    const list = S.channels.filter(c => !c.private && (c.name + c.desc).toLowerCase().includes(q.toLowerCase()));
+    return html`<${SimpleBar} title="Browse channels" sub="Every Public channel. Private channels only appear to their members." />
+      <div className="B2-feed"><input placeholder="Filter Public channels" value=${q} onInput=${e => setQ(e.target.value)} style=${{ width: '100%', padding: 8, border: '1px solid var(--line)', borderRadius: 8, marginBottom: 8 }} />
+      ${list.map(c => html`<div key=${c.id} className="B2-row" style=${{ alignItems: 'center' }} onClick=${() => go('ch:' + c.id)}><div className="grow"><b># ${c.name}</b><div className="small muted">${c.desc} · ${c.members.length} members</div></div>${S.isMember(c) ? html`<span className="small muted">Joined</span>` : html`<button onClick=${e => { e.stopPropagation(); S.join(c.id); }}>Join</button>`}</div>`)}</div>`;
+  };
+  const ChanItem_ = ({ id }) => {
+    const c = S.chan(id); const n = S.pingsIn(id);
+    return html`<div className=${'item' + (view === 'ch:' + id ? ' on' : '') + (n ? ' has' : '')} draggable=${!phone} onDragStart=${() => setDrag(id)} onDragEnd=${() => { setDrag(null); setOverSec(null); }} onClick=${() => go('ch:' + id)}>
+      <span className="grow ellipsis"><${ChanName} c=${c} /></span>${n > 0 && html`<span className=${'badge' + (c.muted ? ' grey' : '')}>${n}</span>`}</div>`;
+  };
+  const Side_ = () => html`<div className=${phone ? 'B2-side phone' : 'B2-side'}>
+    <div className=${'item' + (view === 'pings' ? ' on' : '') + (S.pinged.length ? ' has' : '')} onClick=${() => go('pings')}>🔔 <span className="grow">Pings</span>${S.pinged.length > 0 && html`<span className="badge">${S.pinged.length}</span>`}</div>
+    <div className=${'item' + (view === 'todo' ? ' on' : '')} onClick=${() => go('todo')}>☑ <span className="grow">To Do</span><span className="small" style=${{ opacity: .7 }}>${S.todo.length}</span></div>
+    <div className="B2-hr"></div>
+    ${allSections.map(s => {
+      const shown = s.collapsed ? s.channels.filter(id => S.pingsIn(id) > 0 || view === 'ch:' + id) : s.channels;
+      return html`<div key=${s.id} className=${'B2-sec' + (overSec === s.id ? ' over' : '')}
+        onDragOver=${e => { e.preventDefault(); setOverSec(s.id); }} onDragLeave=${() => setOverSec(null)}
+        onDrop=${e => { e.preventDefault(); if (drag) moveTo(drag, s.id); setDrag(null); setOverSec(null); }}>
+        <div className="B2-sechead" onClick=${() => !s.isDefault && toggle(s.id)}>${s.isDefault ? '▾' : s.collapsed ? '▸' : '▾'} ${s.name}</div>
+        ${shown.map(id => html`<${ChanItem} key=${id} id=${id} />`)}
+        ${s.channels.length === 0 && html`<div className="B2-empty">${phone ? 'Empty' : 'Drag Channels here'}</div>`}
+      </div>`;
+    })}
+    <div className="B2-hr"></div>
+    <div className="item" onClick=${newSection}>＋ <span className="grow">New section</span></div>
+    <div className="item" onClick=${() => go('browse')}>⌕ <span className="grow">Browse channels</span></div>
+    <div className="item">＋ <span className="grow">Create channel</span></div>
+  </div>`;
+  const InlineAck = useStable(InlineAck_);
+  const Row = useStable(Row_);
+  const Panel = useStable(Panel_);
+  const ChannelBar = useStable(ChannelBar_);
+  const SimpleBar = useStable(SimpleBar_);
+  const Main = useStable(Main_);
+  const Browse = useStable(Browse_);
+  const ChanItem = useStable(ChanItem_);
+  const Side = useStable(Side_);
+  const Top = html`<div className="B2-top">
+    ${phone ? html`<b style=${{ fontSize: 17 }} className="grow">Ping</b><button className="ghost" style=${{ color: '#fff' }} onClick=${() => setScreen('search')}>🔍</button>`
+      : html`<b style=${{ fontSize: 16, width: 240 }}>Ping</b><div className="grow" style=${{ display: 'flex', justifyContent: 'center' }}><${Search} dark S=${S} contextChannel=${cid} onOpenThread=${id => { const th = S.thread(id); setView('ch:' + th.channel); setOpenId(id); }} onOpenChannel=${id => go('ch:' + id)} /></div><span style=${{ width: 200, textAlign: 'right' }}><${Avatar} who=${ME} /></span>`}
+  </div>`;
+
+  if (phone) {
+    if (screen === 'search') return html`<${Search} S=${S} full autoOpen onClose=${() => setScreen('home')} onOpenThread=${id => { setView('ch:' + S.thread(id).channel); openThread(id); }} onOpenChannel=${id => go('ch:' + id)} />`;
+    if (screen === 'thread' && t) return html`<${Panel} />`;
+    if (screen === 'main') return html`<div style=${{ display: 'flex', flexDirection: 'column', height: '100%' }}><div className="scroll" style=${{ flex: 1, background: 'var(--b2-grey)' }}><${Main} /></div></div>`;
+    return html`<div style=${{ display: 'flex', flexDirection: 'column', height: '100%' }}>${Top}<div className="scroll" style=${{ flex: 1, background: '#22272e' }}><${Side} /></div></div>`;
+  }
+  return html`<div className="B2-grid">
+    ${Top}
+    <${Side} />
+    <div className="B-main" style=${{ background: 'var(--b2-grey)' }}><div className="scroll" style=${{ flex: 1 }}><${Main} /></div><${Panel} /></div>
+  </div>`;
+}
+
 /* ------------------------------------------------------------------ prototype shell */
 const VARIANTS = [
   { key: 'A', name: 'Three-pane triage', C: VariantA },
   { key: 'B', name: 'Channel-first, Pings in a bell', C: VariantB },
   { key: 'C', name: 'Focus queue, one Ping at a time', C: VariantC },
+  { key: 'B2', name: 'B revised: dark chrome, Channel bar, Sections', C: VariantB2 },
 ];
 function getParam(k, d) { return new URLSearchParams(location.search).get(k) || d; }
 function setParam(k, v) { const u = new URL(location.href); u.searchParams.set(k, v); history.replaceState(null, '', u); }
 function App() {
   const S = useAppState();
-  const [v, setV] = useState(getParam('variant', 'A'));
+  const [v, setV] = useState(getParam('variant', 'B2'));
   const [frame, setFrame] = useState(getParam('frame', 'laptop'));
   const i = Math.max(0, VARIANTS.findIndex(x => x.key === v));
   const go = (d) => { const n = VARIANTS[(i + d + VARIANTS.length) % VARIANTS.length].key; setV(n); setParam('variant', n); };
