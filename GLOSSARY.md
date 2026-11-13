@@ -19,7 +19,7 @@ _Avoid_: Coordinator, COORD, superuser
 Any Staff member who is not an Admin.
 
 **Deactivated**:
-The state of a Staff member who can no longer sign in. Everything they wrote is kept, and they no longer appear when people are being picked.
+The state of a Staff member who can no longer sign in. Everything they wrote is kept and they stay listed in their Channels, but they no longer appear when people are being picked, and their To Do and Pings are discarded.
 _Avoid_: Deleted, baja
 
 ## Communication
@@ -48,6 +48,10 @@ _Avoid_: Owner, responsable
 **Thread**:
 A sub-topic inside a Channel, started by a post that has a title and a description.
 _Avoid_: Post, seguimiento, ticket
+
+**System thread**:
+A Thread that Ping itself starts to announce a change to a Channel, such as a new Channel admin. Nobody can respond as its author.
+_Avoid_: Bot post, automatic message
 
 **Response**:
 A message sent inside a Thread to discuss its sub-topic.
