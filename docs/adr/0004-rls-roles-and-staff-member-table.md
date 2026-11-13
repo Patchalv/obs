@@ -6,7 +6,7 @@ ADR 0002 makes Postgres row-level security a backstop behind the server's permis
 
 ## Decision
 
-- **One visibility rule for everyone.** A row in a channel-scoped table is visible when its Channel is Public or the current Staff member is a member of it. Admins get no exception: "Private means private, even to Admins." Every child row carries a copy of `channel_id`, so each policy is a single lookup. Ping, To Do and mute rows also restrict reads to their owner.
+- **One visibility rule for everyone.** A row in a channel-scoped table is visible when its Channel is Public or the current Staff member is a member of it. Admins get no exception: "Private means private, even to Admins." Every child row carries a copy of `channel_id`, so each policy is a single lookup. Ping, Saved and mute rows also restrict reads to their owner.
 - **Migrations** run as `neondb_owner`. On Neon that role belongs to `neon_superuser` and bypasses RLS, so the app never connects as it.
 - **The app** connects through Neon's pooler as `ping_app`, a role created in SQL that owns no tables.
 - **Identity per request.** Every request runs in one transaction that begins with `set_config('app.staff_id', <id>, true)`. That setting is local to the transaction, which is safe with PgBouncer's transaction mode. A plain `SET` is not safe there, because a session setting could leak into another person's request on a shared connection. Policies return nothing when `app.staff_id` is unset, so a forgotten wrapper fails closed.
@@ -36,3 +36,14 @@ ADR 0002 makes Postgres row-level security a backstop behind the server's permis
 - No transaction may stay open on a long-lived SSE stream.
 - Neon doesn't document that `set_config(..., true)` works through its pooler. The first build slice must prove it with a test.
 - Tests must exercise both permission layers, as ADR 0002 already requires.
+
+## Amendment (2026-11-13): what `ping_system` does
+
+Writing the MVP spec showed that owner-only rows for Pings, Saved Threads and mutes mean `ping_app` can't touch anyone else's. Several ordinary actions need to, so `ping_system`'s job is wider than the list above:
+
+- **Ping fan-out.** Posting a Thread, Response or Mention reads other people's mutes and Saved Threads and creates or bumps their Pings. The server authorises the post as `ping_app`, then the system-actions module does the fan-out as `ping_system`.
+- **The losing-access clean-up** when someone leaves or is removed from a Channel, or a Channel turns Private, because it deletes other people's Ping, Saved and mute rows.
+- **Invite acceptance and `bootstrap-admin`,** because nobody is signed in when they run.
+- **The `audit_event` retention sweeper.**
+
+The rule that only one system-actions module may use `ping_system` still holds. `SECURITY DEFINER` functions remain the fallback. The full policy table is in `docs/spec/permissions.md`.

@@ -23,7 +23,7 @@ The state of a Staff member an Admin has invited who has not yet set a password.
 _Avoid_: Pending, unconfirmed
 
 **Deactivated**:
-The state of a Staff member who can no longer sign in. Everything they wrote is kept and they stay listed in their Channels, but they no longer appear when people are being picked, and their To Do and Pings are discarded.
+The state of a Staff member who can no longer sign in. Everything they wrote is kept and they stay listed in their Channels, but they no longer appear when people are being picked, and their Saved list and Pings are discarded.
 _Avoid_: Deleted, baja
 
 ## Communication
@@ -46,7 +46,7 @@ A Channel that is closed to new activity but can still be found and read by its 
 _Avoid_: Deleted channel
 
 **Channel admin**:
-A member of a Channel who may change its name, description, visibility, settings and members. A Channel always has at least one active Channel admin. Channel admins do not moderate other people's Threads or Responses.
+A member of a Channel who may change its name, description, visibility, settings and members. A Channel always has at least one active Channel admin. Channel admins do not edit or delete other people's Threads or Responses, but they can remove any Attachment in their Channel.
 _Avoid_: Owner, responsable
 
 **Section**:
@@ -87,12 +87,12 @@ An item telling one Staff member about other people's new activity in one Thread
 _Avoid_: Notification, alert
 
 **Acknowledge**:
-To clear a Ping by taking one of the allowed actions: mark it read, react with an emoji, mark it To Do, or send a Response. Viewing it alone does not count.
+To clear a Ping by taking one of the allowed actions: mark it read, react with an emoji, Save it, or send a Response. Viewing it alone does not count.
 _Avoid_: Dismiss, seen
 
-**To Do**:
-A Staff member's personal list of Threads they have committed to act on. A Thread leaves the list when that Staff member marks it done or can no longer read it. A Thread on the list still gets Pings.
-_Avoid_: Task, pending
+**Saved**:
+A Staff member's personal list of Threads to come back to: to read later when they have time, to write a Response, or to act on. Saving a Thread Acknowledges its Ping. A Thread leaves the list when that Staff member removes it or can no longer read it. A Saved Thread still gets Pings.
+_Avoid_: To Do, bookmark, task, pending
 
 **Mute**:
 A Staff member's choice to stop getting Pings for Responses, either in one Thread or across a whole Channel. New Threads and Mentions still Ping them.
