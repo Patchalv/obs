@@ -62,8 +62,12 @@ An image or file added to a Thread or Response. Anyone who can read that Thread 
 _Avoid_: Upload, document, adjunto
 
 **Resolved thread**:
-A Thread marked finished. It is hidden from its Channel unless someone searches for it or chooses to show resolved Threads, and it can be reopened.
+A Thread marked finished. It is hidden from its Channel's Thread list unless someone chooses to show resolved Threads, still appears in search, and can be reopened.
 _Avoid_: Closed, finalizada, done
+
+**Latest activity**:
+When a Thread was last active: the later of when it was started and when its newest Response was posted. Edits, reactions and resolving or reopening don't count.
+_Avoid_: Last updated, last modified
 
 **Mention**:
 Naming a Staff member in a Thread or Response with @ so that they always get a Ping, whatever their mute settings. Only Staff members who can read the Thread can be mentioned.
