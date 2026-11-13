@@ -45,6 +45,10 @@ _Avoid_: Deleted channel
 A member of a Channel who may change its name, description, visibility, settings and members. A Channel always has at least one active Channel admin. Channel admins do not moderate other people's Threads or Responses.
 _Avoid_: Owner, responsable
 
+**Section**:
+A named group of Channels in one Staff member's sidebar, such as Teaching or Building. Each Staff member creates their own Sections and drags Channels between them, and nobody else sees them. A Channel they haven't placed sits in the default Channels section.
+_Avoid_: Folder, category, group
+
 **Thread**:
 A sub-topic inside a Channel, started by a post that has a title and a description.
 _Avoid_: Post, seguimiento, ticket
