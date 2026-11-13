@@ -12,7 +12,7 @@ A person employed by Spark who can sign in. Includes owners, teachers, administr
 _Avoid_: Employee, account, personal
 
 **Admin**:
-A Staff member who invites, Deactivates and sets the role of Staff members for all of Spark, and can edit or delete any Thread or Response in the Channels they can see. Admins see only the Private channels they are members of. Spark always has at least one active Admin.
+A Staff member who invites, Deactivates and sets the role of Staff members for all of Spark, and can edit or delete any Thread or Thread Response in the Channels they can see. Admins see only the Private channels they are members of. Spark always has at least one active Admin.
 _Avoid_: Coordinator, COORD, superuser
 
 **Member**:
@@ -46,7 +46,7 @@ A Channel that is closed to new activity but can still be found and read by its 
 _Avoid_: Deleted channel
 
 **Channel admin**:
-A member of a Channel who may change its name, description, visibility, settings and members. A Channel always has at least one active Channel admin. Channel admins do not edit or delete other people's Threads or Responses, but they can remove any Attachment in their Channel.
+A member of a Channel who may change its name, description, visibility, settings and members. A Channel always has at least one active Channel admin. Channel admins do not edit or delete other people's Threads or Thread Responses, but they can remove any Attachment in their Channel.
 _Avoid_: Owner, responsable
 
 **Section**:
@@ -61,12 +61,12 @@ _Avoid_: Post, seguimiento, ticket
 A Thread that Ping itself starts to announce a change to a Channel, such as a new Channel admin or a switch between Public and Private. Nobody can respond as its author.
 _Avoid_: Bot post, automatic message
 
-**Response**:
+**Thread Response**:
 A message sent inside a Thread to discuss its sub-topic.
-_Avoid_: Reply, comment, respuesta
+_Avoid_: Response (on its own), reply, comment, respuesta
 
 **Attachment**:
-An image or file added to a Thread or Response. Anyone who can read that Thread can open it.
+An image or file added to a Thread or Thread Response. Anyone who can read that Thread can open it.
 _Avoid_: Upload, document, adjunto
 
 **Resolved thread**:
@@ -74,11 +74,11 @@ A Thread marked finished. It is hidden from its Channel's Thread list unless som
 _Avoid_: Closed, finalizada, done
 
 **Latest activity**:
-When a Thread was last active: the later of when it was started and when its newest Response was posted. Edits, reactions and resolving or reopening don't count.
+When a Thread was last active: the later of when it was started and when its newest Thread Response was posted. Edits, reactions and resolving or reopening don't count.
 _Avoid_: Last updated, last modified
 
 **Mention**:
-Naming a Staff member in a Thread or Response with @ so that they always get a Ping, whatever their mute settings. Only Staff members who can read the Thread can be mentioned.
+Naming a Staff member in a Thread or Thread Response with @ so that they always get a Ping, whatever their mute settings. Only Staff members who can read the Thread can be mentioned.
 
 ## Attention
 
@@ -87,12 +87,12 @@ An item telling one Staff member about other people's new activity in one Thread
 _Avoid_: Notification, alert
 
 **Acknowledge**:
-To clear a Ping by taking one of the allowed actions: mark it read, react with an emoji, Save it, or send a Response. Viewing it alone does not count.
+To clear a Ping by taking one of the allowed actions: mark it read, react with an emoji, Save it, or send a Thread Response. Viewing it alone does not count.
 _Avoid_: Dismiss, seen
 
 **Saved**:
-A Staff member's personal list of Threads to come back to: to read later when they have time, to write a Response, or to act on. Saving a Thread Acknowledges its Ping. A Thread leaves the list when that Staff member removes it or can no longer read it. A Saved Thread still gets Pings.
+A Staff member's personal list of Threads to come back to: to read later when they have time, to write a Thread Response, or to act on. Saving a Thread Acknowledges its Ping. A Thread leaves the list when that Staff member removes it or can no longer read it. A Saved Thread still gets Pings.
 _Avoid_: To Do, bookmark, task, pending
 
 **Mute**:
-A Staff member's choice to stop getting Pings for Responses, either in one Thread or across a whole Channel. New Threads and Mentions still Ping them.
+A Staff member's choice to stop getting Pings for Thread Responses, either in one Thread or across a whole Channel. New Threads and Mentions still Ping them.

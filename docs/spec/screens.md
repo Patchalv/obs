@@ -46,7 +46,7 @@ Each **Thread row** is a white card showing:
 - the author and time;
 - the title and a preview of the description;
 - the first Attachments;
-- "N Responses · N new";
+- "N Thread Responses · N new";
 - a Saved marker and an "@You" marker when they apply;
 - inline Acknowledge buttons at the top right: ✓ mark read, 👍 react, 🔖 Save.
 
@@ -58,9 +58,9 @@ The **Files** tab lists the Channel's Attachments. The **Members** tab lists mem
 
 - Opens as a side panel on the right of the Channel view.
 - Its header holds the Acknowledge buttons (mark read, react, Save) and Resolve or reopen when allowed.
-- Then the Thread itself, its Responses, a "N new" divider above the Responses that are new since you last Acknowledged, and the composer at the bottom.
+- Then the Thread itself, its Thread Responses, a "N new" divider above the Thread Responses that are new since you last Acknowledged, and the composer at the bottom.
 - Opening a Thread never clears its Ping.
-- Placeholders: "Response deleted" and "Attachment removed by <name>".
+- Placeholders: "Thread Response deleted" and "Attachment removed by <name>".
 - Edited content shows "edited", or "edited by <name>" when someone other than the author edited it.
 
 ### Pings and Saved views
@@ -78,7 +78,7 @@ These use the same Thread rows as the Channel feed, with the Channel name on eac
 Reached from the avatar menu, for Admins only:
 
 - **Staff members:** everyone with their role and state. Invited people show Resend and Cancel (and "Expired, Resend" or "Email not sent, Resend" when those apply). Actions: invite, change role, change email, Deactivate, reactivate, remove a profile photo.
-- **Settings:** maximum Attachment size and maximum files per Thread or Response.
+- **Settings:** maximum Attachment size and maximum files per Thread or Thread Response.
 
 ## Phone
 
@@ -91,7 +91,7 @@ Reached from the avatar menu, for Admins only:
 
 - One search bar, always visible on laptop (behind an icon on phone).
 - Clicking it opens a panel of filter chips: **In: #channel** (suggested when you're inside a Channel), **From: person**, and **Status** (All by default, Open, Resolved).
-- Results have **All**, **Channels** and **Threads** tabs. Archived channels carry an "Archived" badge. Opening a Response match scrolls to that Response.
+- Results have **All**, **Channels** and **Threads** tabs. Archived channels carry an "Archived" badge. Opening a Thread Response match scrolls to that Thread Response.
 
 The rules behind search are in [product.md](product.md#search).
 
@@ -102,6 +102,6 @@ The rules behind search are in [product.md](product.md#search).
 - **Create channel:** name, description and visibility.
 - **Making a Private channel Public** shows a warning that every Staff member will be able to see its whole history.
 - **Leaving as the last active Channel admin** is stopped with an explanation (see [product.md](product.md#members-and-channel-admins)).
-- **Deleting a Thread that has other people's Responses** asks for confirmation and says how many Responses will be deleted.
+- **Deleting a Thread that has other people's Thread Responses** asks for confirmation and says how many Thread Responses will be deleted.
 
 Source: [How should Ping's inbox, Channel and Thread screens look on laptop and phone?](https://github.com/Patchalv/ping/issues/8#issuecomment-6862576413)

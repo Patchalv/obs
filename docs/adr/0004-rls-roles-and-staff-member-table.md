@@ -41,7 +41,7 @@ ADR 0002 makes Postgres row-level security a backstop behind the server's permis
 
 Writing the MVP spec showed that owner-only rows for Pings, Saved Threads and mutes mean `ping_app` can't touch anyone else's. Several ordinary actions need to, so `ping_system`'s job is wider than the list above:
 
-- **Ping fan-out.** Posting a Thread, Response or Mention reads other people's mutes and Saved Threads and creates or bumps their Pings. The server authorises the post as `ping_app`, then the system-actions module does the fan-out as `ping_system`.
+- **Ping fan-out.** Posting a Thread, Thread Response or Mention reads other people's mutes and Saved Threads and creates or bumps their Pings. The server authorises the post as `ping_app`, then the system-actions module does the fan-out as `ping_system`.
 - **The losing-access clean-up** when someone leaves or is removed from a Channel, or a Channel turns Private, because it deletes other people's Ping, Saved and mute rows.
 - **Invite acceptance and `bootstrap-admin`,** because nobody is signed in when they run.
 - **The `audit_event` retention sweeper.**

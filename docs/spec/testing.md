@@ -11,7 +11,7 @@ Source: [How do we test agent-written code, including both permission layers?](h
   - the permissions module's decision functions;
   - the ProseMirror allowlist validator;
   - `body_text` extraction;
-  - working out who gets a Ping for a new Thread, Response or Mention.
+  - working out who gets a Ping for a new Thread, Thread Response or Mention.
 
   Anything that touches SQL is an integration test.
 - **Integration database:** a Postgres container, pinned to Neon's Postgres major version. CI uses a service container; local runs use the same image through `docker compose`. There's no Neon branch per CI run.

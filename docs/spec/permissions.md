@@ -46,15 +46,15 @@ Terms used below:
 | Leave ✱ | Any member, except the last active Channel admin |
 | Delete a Channel | Nobody |
 
-### Threads, Responses and Attachments
+### Threads, Thread Responses and Attachments
 
 | Action | Who |
 | --- | --- |
 | Start a Thread | Member |
-| Send a Response, react | Member |
+| Send a Thread Response, react | Member |
 | Mention someone | Whoever is posting; only Staff members who can read the Thread can be Mentioned |
-| Edit a Thread or Response | Its author; Admin in a Channel they can read |
-| Delete a Thread or Response ✱ (Admin only) | Its author; Admin in a Channel they can read |
+| Edit a Thread or Thread Response | Its author; Admin in a Channel they can read |
+| Delete a Thread or Thread Response ✱ (Admin only) | Its author; Admin in a Channel they can read |
 | Resolve, reopen | Any member, or only the author and Channel admins, per the Channel's setting |
 | Upload an Attachment | Whoever is posting, within the Spark-wide limits |
 | Download an Attachment ✱ | Anyone who can read the Thread |
@@ -89,7 +89,7 @@ How the backstop works is recorded in [ADR 0004](../adr/0004-rls-roles-and-staff
 - **`neondb_owner`** runs migrations, from GitHub Actions only. On Neon it belongs to `neon_superuser` and bypasses RLS, so the app never connects as it.
 - **`ping_app`** is the app's request role. It connects through Neon's pooler, is created in SQL, and owns no tables.
 - **`ping_system`** has its own small pool and is used only by one system-actions module, for:
-  - **Ping fan-out:** creating or bumping other people's Pings for a new Thread, Response or Mention, after the server has authorised the post;
+  - **Ping fan-out:** creating or bumping other people's Pings for a new Thread, Thread Response or Mention, after the server has authorised the post;
   - Deactivation clean-up, automatic Channel admin promotion and automatic archiving;
   - the losing-access clean-up *(proposed; see [data-model.md](data-model.md#the-clean-up-routine))*;
   - invite acceptance and `bootstrap-admin` *(proposed)*;
@@ -109,7 +109,7 @@ Every one of Ping's tables has RLS enabled and forced, with an explicit policy. 
 
 | Table | `ping_app` policy |
 | --- | --- |
-| `channel`, `thread`, `response`, `reaction`, `mention`, `attachment` (once attached) | **The visibility rule:** a row is visible when its Channel is Public or the current Staff member is a member of it. No Admin exception. Applied `FOR ALL`. |
+| `channel`, `thread`, `thread_response`, `reaction`, `mention`, `attachment` (once attached) | **The visibility rule:** a row is visible when its Channel is Public or the current Staff member is a member of it. No Admin exception. Applied `FOR ALL`. |
 | `channel_member` | The visibility rule, through the membership helper function (see [data-model.md](data-model.md#channels)). |
 | `attachment` while pending | Its uploader only. |
 | `ping` | Read and delete: the owner's own rows in Channels they can read. Insert and update: none (only `ping_system`, through the fan-out). |

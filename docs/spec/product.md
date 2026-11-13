@@ -6,7 +6,7 @@ What Ping does, rule by rule. The screens are in [screens.md](screens.md), and w
 
 - A **Staff member** is a person employed by Spark who can sign in. There are about 20.
 - Each Staff member has one company role: **Admin** or **Member**.
-- Admins invite Staff members, set their role, change their email, Deactivate and reactivate them, and edit Spark-wide settings. They can also edit or delete any Thread or Response in the Channels they can see.
+- Admins invite Staff members, set their role, change their email, Deactivate and reactivate them, and edit Spark-wide settings. They can also edit or delete any Thread or Thread Response in the Channels they can see.
 - Admins see only the Private channels they are members of. Private means private, even to Admins.
 - Spark always has at least one active Admin. The last active Admin can't demote or Deactivate themself.
 - A Staff member is in one of three states:
@@ -94,17 +94,17 @@ Sources: [Who can do what in a Channel?](https://github.com/Patchalv/ping/issues
 - An **Archived channel** stays readable and searchable by everyone who could read it before. Its search results carry an "Archived" badge.
 - Archiving Pings nobody, apart from its System thread. Open Pings stay until they're Acknowledged.
 - In an Archived channel:
-  - **Blocked:** new Threads, Responses and reactions; edits; deletes by authors; Resolve and reopen; changing settings; adding, removing or promoting members; joining.
-  - **Still allowed:** reading and search; Acknowledging (mark read); Save; Mute; leaving; company Admins deleting Threads and Responses; removing Attachments *(proposed, so personal data can always come down)*; unarchiving.
+  - **Blocked:** new Threads, Thread Responses and reactions; edits; deletes by authors; Resolve and reopen; changing settings; adding, removing or promoting members; joining.
+  - **Still allowed:** reading and search; Acknowledging (mark read); Save; Mute; leaving; company Admins deleting Threads and Thread Responses; removing Attachments *(proposed, so personal data can always come down)*; unarchiving.
 
 Source: decided while writing this spec.
 
-## Threads and Responses
+## Threads and Thread Responses
 
 - A **Thread** is a sub-topic inside a Channel. It has a title and a rich-text description.
-- A **Response** is a rich-text message inside a Thread.
-- Only Channel members start Threads, send Responses and react. A Staff member reading a Public channel they haven't joined can read, Acknowledge (mark read or Save) and Mute Threads, but must join before posting or reacting.
-- **Latest activity** is the later of when a Thread was started and when its newest Response was posted. Edits, reactions and resolving or reopening don't count, and deleting a Response doesn't move it back.
+- A **Thread Response** is a rich-text message inside a Thread.
+- Only Channel members start Threads, send Thread Responses and react. A Staff member reading a Public channel they haven't joined can read, Acknowledge (mark read or Save) and Mute Threads, but must join before posting or reacting.
+- **Latest activity** is the later of when a Thread was started and when its newest Thread Response was posted. Edits, reactions and resolving or reopening don't count, and deleting a Thread Response doesn't move it back.
 
 ### Rich text
 
@@ -113,27 +113,27 @@ Source: decided while writing this spec.
 
 ### Editing
 
-- Authors edit their own Thread (title and description) and their own Responses at any time.
-- Company Admins edit any Thread or Response in the Channels they can see, including content by Deactivated Staff members.
+- Authors edit their own Thread (title and description) and their own Thread Responses at any time.
+- Company Admins edit any Thread or Thread Response in the Channels they can see, including content by Deactivated Staff members.
 - Channel admins can't edit other people's content.
 - Edits are marked "edited". When the editor isn't the author, the mark reads "edited by <name>".
 - Only the latest text is kept. There is no edit history.
 
 ### Deleting
 
-- Authors delete their own Threads and Responses. Company Admins delete any Thread or Response in the Channels they can see.
-- Channel admins can't delete other people's Threads or Responses.
-- **Deleting a Thread** removes it completely: its Responses (including other people's), reactions, Mentions and Attachments, and everyone's Pings and Saved entries for it. When the author deletes a Thread that has other people's Responses, a confirmation first says how many will go.
-- **Deleting a Response** removes its content, reactions and Attachments for real and leaves a "Response deleted" placeholder, so the Thread still reads correctly.
+- Authors delete their own Threads and Thread Responses. Company Admins delete any Thread or Thread Response in the Channels they can see.
+- Channel admins can't delete other people's Threads or Thread Responses.
+- **Deleting a Thread** removes it completely: its Thread Responses (including other people's), reactions, Mentions and Attachments, and everyone's Pings and Saved entries for it. When the author deletes a Thread that has other people's Thread Responses, a confirmation first says how many will go.
+- **Deleting a Thread Response** removes its content, reactions and Attachments for real and leaves a "Thread Response deleted" placeholder, so the Thread still reads correctly.
 
 ### Reactions
 
-- Channel members react to a Thread or a Response with any Unicode emoji. Each person can add each emoji once per item.
+- Channel members react to a Thread or a Thread Response with any Unicode emoji. Each person can add each emoji once per item.
 - Reactions never Ping anyone, including the author.
 
 ### Mentions
 
-- Typing @ in a Thread or Response picks a Staff member to Mention. A Mention always Pings them, whatever their mute settings.
+- Typing @ in a Thread or Thread Response picks a Staff member to Mention. A Mention always Pings them, whatever their mute settings.
 - Only Staff members who can read the Thread can be Mentioned. In a Public channel that's any active Staff member, and Mentioning a non-member doesn't make them join. In a Private channel the picker lists only Channel members.
 - Mentions store the Staff member's ID, so renaming someone never breaks one.
 - A Mention added in an edit Pings only the newly Mentioned people.
@@ -164,14 +164,14 @@ A **Ping** tells one Staff member about other people's new activity in one Threa
 ### The core rule
 
 - Each Staff member has at most one open Ping per Thread.
-- While a Ping is open, new activity raises its count. The count covers new Threads, Responses and Mentions since the last Acknowledge.
+- While a Ping is open, new activity raises its count. The count covers new Threads, Thread Responses and Mentions since the last Acknowledge.
 - Acknowledging clears the Ping. The next new activity starts a fresh Ping at 1.
 - Viewing a Thread never clears its Ping.
 
 ### Who gets a Ping
 
 - **A new Thread** (including a System thread): every active Channel member except its author. Mutes are ignored.
-- **A new Response:**
+- **A new Thread Response:**
   - every active Channel member who hasn't muted the Channel or the Thread;
   - plus anyone who has Saved the Thread, even if they've since left a Public channel;
   - plus anyone Mentioned in it.
@@ -185,9 +185,9 @@ A **Ping** tells one Staff member about other people's new activity in one Threa
 To **Acknowledge** a Ping is to clear it by one of these actions:
 
 - **Mark read.**
-- **React** with an emoji, to the Thread or any of its Responses.
+- **React** with an emoji, to the Thread or any of its Thread Responses.
 - **Save** the Thread.
-- **Send a Response** in the Thread.
+- **Send a Thread Response** in the Thread.
 
 ### Edge cases
 
@@ -195,7 +195,7 @@ To **Acknowledge** a Ping is to clear it by one of these actions:
 - **Saved** doesn't mute a Thread: a Thread you've Saved still gets Pings. Removing it from Saved leaves any Ping alone, and a Ping never adds anything to Saved.
 - **Resolved threads and Archived channels:** existing Pings stay until Acknowledged.
 - **Joining a Public channel** back-fills nothing. Pings start with the first activity after joining.
-- **Deleting a Thread** removes its Pings for everyone. Deleting a Response doesn't change open Ping counts, and nothing is recounted.
+- **Deleting a Thread** removes its Pings for everyone. Deleting a Thread Response doesn't change open Ping counts, and nothing is recounted.
 
 ### Losing access
 
@@ -210,22 +210,22 @@ Sources: [Exactly when does a Ping appear, update and clear?](https://github.com
 
 ## Saved
 
-- **Saved** is each Staff member's personal list of Threads to come back to: to read later when they have time, to write a Response, or to act on. Nobody else sees it.
+- **Saved** is each Staff member's personal list of Threads to come back to: to read later when they have time, to write a Thread Response, or to act on. Nobody else sees it.
 - Saving a Thread Acknowledges its Ping.
 - A Thread leaves the list when its owner removes it, or when they can no longer read the Thread. There's no history of removed items.
 
 ## Mute
 
 - A Staff member can **Mute** a whole Channel they're a member of, or a single Thread they can read.
-- While muted, new Responses don't Ping them. New Threads and Mentions still do.
+- While muted, new Thread Responses don't Ping them. New Threads and Mentions still do.
 - Leaving a Channel drops your mutes for it.
 
 ## Attachments
 
-- Images and files can be attached to Threads and Responses.
+- Images and files can be attached to Threads and Thread Responses.
 - **Limits** are Spark-wide settings that Admins edit:
   - maximum file size: default 20 MB, ceiling 50 MB;
-  - maximum files per Thread or Response: default 5, ceiling 20.
+  - maximum files per Thread or Thread Response: default 5, ceiling 20.
 - There's no storage quota. Monitoring warns at 80% of the storage free tier.
 - **Allowed types** are fixed in code: JPEG, PNG, WebP, GIF, HEIC, PDF, Word, Excel and PowerPoint (OOXML), OpenDocument, TXT and CSV. The server checks magic bytes as well as the extension.
 - **Images** are resized in the browser to about 2048 px on the long edge, re-encoded, and stripped of all metadata, including GPS. Other files are stored unchanged.
@@ -257,12 +257,12 @@ Source: [What happens to a Deactivated Staff member's Channels and Threads?](htt
 - Public channels (joined or not) and the Private channels you're a member of. Admins get no extra reach.
 - Archived channels, with an "Archived" badge on their results.
 - Resolved threads, by default.
-- Never deleted Threads or Responses. Content by Deactivated Staff members stays searchable, and they can still be picked in the From filter.
+- Never deleted Threads or Thread Responses. Content by Deactivated Staff members stays searchable, and they can still be picked in the From filter.
 
 ### What it matches
 
 - Channel name and description.
-- Thread title, Thread description and Response text.
+- Thread title, Thread description and Thread Response text.
 - **Not** Attachment filenames, file contents or people's names.
 
 ### Matching
@@ -274,7 +274,7 @@ Source: [What happens to a Deactivated Staff member's Channels and Threads?](htt
 ### Results and filters
 
 - Tabs: **All**, **Channels** and **Threads**. All shows the top few Channels above the Threads.
-- One result per Thread. When the match is in a Response, the result shows that Response's snippet, and opening it scrolls to that Response.
+- One result per Thread. When the match is in a Thread Response, the result shows that Thread Response's snippet, and opening it scrolls to that Thread Response.
 - Results are sorted by Latest activity, newest first.
 - Filter chips: **In: #channel** (offered as a one-click suggestion when you search from inside a Channel, never applied by default), **From: person**, and **Status: All (default), Open or Resolved**.
 - Not in the MVP: date ranges, "has a link", "includes me", file search or people search.
@@ -282,7 +282,7 @@ Source: [What happens to a Deactivated Staff member's Channels and Threads?](htt
 ### A Channel's Thread list (not search)
 
 - **Status:** Open (default), Resolved or All.
-- **Pings:** All (default) or With Pings, meaning Threads where you have a Ping right now. The label avoids "Unread", because Ping has no separate read state. Known gap: a muted Thread's new Responses don't create a Ping, so it won't show under With Pings.
+- **Pings:** All (default) or With Pings, meaning Threads where you have a Ping right now. The label avoids "Unread", because Ping has no separate read state. Known gap: a muted Thread's new Thread Responses don't create a Ping, so it won't show under With Pings.
 - **Sort:** Latest activity (default) or Date started, newest or oldest first.
 - These choices are remembered per Channel in the browser only. A new device starts from the defaults.
 
@@ -290,7 +290,7 @@ Source: [What can search find in the MVP?](https://github.com/Patchalv/ping/issu
 
 ## Live updates
 
-- Each open browser holds one Server-Sent Events connection. It carries new Threads and Responses, reactions, resolve and reopen, and Ping counts, filtered to what that Staff member can read. It also carries edits, deletions, membership changes and Channel changes *(proposed)*, so open screens stay correct.
+- Each open browser holds one Server-Sent Events connection. It carries new Threads and Thread Responses, reactions, resolve and reopen, and Ping counts, filtered to what that Staff member can read. It also carries edits, deletions, membership changes and Channel changes *(proposed)*, so open screens stay correct.
 - Every user action is an ordinary request. The stream only pushes.
 - The server sends a heartbeat every 20–30 seconds. A client that reconnects resumes with `Last-Event-ID`; one that has fallen too far behind refetches.
 

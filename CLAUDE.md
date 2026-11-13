@@ -8,9 +8,9 @@ There is no application code yet, so there are no build, lint or test commands. 
 
 ## What this is
 
-**Ping** is Spark's internal staff tool for communication and work tracking (Channels, Threads, Responses, Pings, Saved). It is a new product inspired by TECS Obs (OBS 2.0), a Classic ASP case-tracking app, but it shares no data, terminology or design with it.
+**Ping** is Spark's internal staff tool for communication and work tracking (Channels, Threads, Thread Responses, Pings, Saved). It is a new product inspired by TECS Obs (OBS 2.0), a Classic ASP case-tracking app, but it shares no data, terminology or design with it.
 
-- `GLOSSARY.md`: the canonical domain language. Use its terms in code, issues, tests and docs, and avoid the synonyms it lists under _Avoid_ (for example: Thread, not ticket or post; Ping, not notification; Response, not reply; Deactivated, not deleted).
+- `GLOSSARY.md`: the canonical domain language. Use its terms in code, issues, tests and docs, and avoid the synonyms it lists under _Avoid_ (for example: Thread, not ticket or post; Ping, not notification; Thread Response, not reply; Deactivated, not deleted).
 - `OBS_REVERSE_ENGINEERING.md`: read-only notes on how TECS Obs works, with each claim tagged Observed, Inferred or Unknown. Treat it as background research, not a spec. Its Spanish/Obs vocabulary (observación, seguimiento, responsable, recado) must not leak into Ping's code or docs.
 - `docs/adr/`: architecture decisions, created as they are made (none yet).
 

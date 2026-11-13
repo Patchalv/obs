@@ -10,7 +10,7 @@ Source: [What is Ping's data model?](https://github.com/Patchalv/ping/issues/11#
 - **State is a timestamp plus an actor**, not a boolean: `archived_at/by`, `resolved_at/by`, `deactivated_at/by`, `edited_at/by`, `deleted_at/by`, `removed_at/by`.
 - **No edit history.** Only the latest text is kept, plus who last edited it and when. System threads record Channel changes in public, and `audit_event` records security-relevant actions.
 - **`channel_id` is copied onto every child row,** so each RLS check is a single lookup. A composite foreign key `(thread_id, channel_id)` → `thread(id, channel_id)` stops the copy drifting. Threads never move between Channels.
-- **Exactly-one-target rows.** Reactions, Mentions and Attachments each live in one table with nullable `thread_id` and `response_id` and a check constraint, keeping real foreign keys and cascades.
+- **Exactly-one-target rows.** Reactions, Mentions and Attachments each live in one table with nullable `thread_id` and `thread_response_id` and a check constraint, keeping real foreign keys and cascades.
 - **Spark-wide settings** live in a single-row typed table with check constraints.
 - **No live-update event table.** The server keeps an in-memory buffer, and a client that falls behind refetches.
 - **Rich-text bodies** are ProseMirror JSON in a `jsonb` `body` column, with plain text extracted by the server into `body_text` on every save, for search and snippets ([ADR 0003](../adr/0003-rich-text-stored-as-prosemirror-json.md)).
@@ -88,7 +88,7 @@ Password-reset tokens use Better Auth's own `verification` table.
 
 Both tables are visible only to their owner.
 
-## Threads and Responses
+## Threads and Thread Responses
 
 **`thread`**
 
@@ -98,33 +98,33 @@ Both tables are visible only to their owner.
 - State: `created_at`, `latest_activity_at`, `edited_at/by`, `resolved_at/by`.
 - `unique (id, channel_id)`, for the composite foreign keys.
 - Check: a System thread has no author and has a kind and payload; an ordinary Thread is the other way round.
-- `latest_activity_at` only moves forward. It starts at `created_at`, and each new Response sets it to that Response's `created_at`. Deleting a Response doesn't move it back.
+- `latest_activity_at` only moves forward. It starts at `created_at`, and each new Thread Response sets it to that Thread Response's `created_at`. Deleting a Thread Response doesn't move it back.
 - Search: a generated `search` tsvector over `title` and `body_text`, with a GIN index.
 - Indexes: `(channel_id, latest_activity_at)` and `(channel_id, created_at)`.
-- Deleting a Thread is a real delete that cascades to its Responses, reactions, Mentions, Attachments, Pings and Saved entries. Its file objects go through `pending_file_deletion`.
+- Deleting a Thread is a real delete that cascades to its Thread Responses, reactions, Mentions, Attachments, Pings and Saved entries. Its file objects go through `pending_file_deletion`.
 
-**`response`**
+**`thread_response`**
 
 - `id`, `thread_id`, `channel_id` (composite foreign key), `author_id`, `body` (`jsonb`), `body_text`, `created_at`, `edited_at/by`, `deleted_at/by`.
-- Deleting a Response keeps the row as the "Response deleted" placeholder: its body is nulled (check: deleted ⇒ body is null), and its Attachments, reactions and Mentions are removed.
-- Search: a generated `search` tsvector over `body_text`, with a GIN index. Search excludes deleted Responses.
+- Deleting a Thread Response keeps the row as the "Thread Response deleted" placeholder: its body is nulled (check: deleted ⇒ body is null), and its Attachments, reactions and Mentions are removed.
+- Search: a generated `search` tsvector over `body_text`, with a GIN index. Search excludes deleted Thread Responses.
 - Index: `(thread_id, created_at)`.
 
-## On Threads and Responses
+## On Threads and Thread Responses
 
 **`reaction`**
 
-- `channel_id`, `thread_id` or `response_id`, `staff_id`, `emoji` (text), `created_at`.
+- `channel_id`, `thread_id` or `thread_response_id`, `staff_id`, `emoji` (text), `created_at`.
 - Partial unique indexes on (target, `staff_id`, `emoji`).
 
 **`mention`**
 
-- `channel_id`, `thread_id` or `response_id`, `staff_id`.
+- `channel_id`, `thread_id` or `thread_response_id`, `staff_id`.
 - Rebuilt from the Mention nodes on every save. Comparing the new rows with the old ones shows who was newly Mentioned in an edit, and only they get a Ping.
 
 **`attachment`**
 
-- `id`, `channel_id`, `thread_id` or `response_id`, `uploader_id`, `object_key` (random UUID, unique), `original_filename`, `content_type`, `size_bytes`, `created_at`, `removed_at/by`.
+- `id`, `channel_id`, `thread_id` or `thread_response_id`, `uploader_id`, `object_key` (random UUID, unique), `original_filename`, `content_type`, `size_bytes`, `created_at`, `removed_at/by`.
 - **Pending:** a file uploaded while its post is being written has no target and no `channel_id`, and only its uploader can see it. It becomes attached when the post is saved.
 - Check: at most one target, and none only while pending.
 - Pending Attachments older than 24 hours are swept with their files.
@@ -158,7 +158,7 @@ Ping, Saved and mute rows belong to one Staff member, and `ping_app` can only to
 **`pending_file_deletion`**
 
 - `object_key`, `requested_at`, `attempts`, `last_error`.
-- Written in the same transaction as any Thread delete, Response delete, Attachment removal, profile photo replacement or removal, and pending-upload sweep. An in-app sweeper deletes the storage objects and retries until they're gone, because a database transaction can't include object storage.
+- Written in the same transaction as any Thread delete, Thread Response delete, Attachment removal, profile photo replacement or removal, and pending-upload sweep. An in-app sweeper deletes the storage objects and retries until they're gone, because a database transaction can't include object storage.
 
 **`audit_event`**
 

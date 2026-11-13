@@ -1,8 +1,8 @@
-# Thread and Response bodies are stored as ProseMirror JSON, not Markdown
+# Thread and Thread Response bodies are stored as ProseMirror JSON, not Markdown
 
 **Status:** accepted
 
-Staff members need a proper rich-text editor for Threads and Responses: headings, formatting, lists, links, Mentions and emoji. We use TipTap as the editor. The open question was the storage format, because whichever we pick is what every row is written in and what every later reader has to handle.
+Staff members need a proper rich-text editor for Threads and Thread Responses: headings, formatting, lists, links, Mentions and emoji. We use TipTap as the editor. The open question was the storage format, because whichever we pick is what every row is written in and what every later reader has to handle.
 
 ## Decision
 
