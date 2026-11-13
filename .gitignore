@@ -3,3 +3,8 @@
 
 # Impeccable engine binary (the launcher downloads it on first run)
 .claude/skills/impeccable/scripts/bin/
+
+# Local secrets
+.env
+.env.*
+!.env.example
