@@ -34,5 +34,5 @@ Ping is a side project run by one person, and its threads hold employee and chil
 - **Stay under Fly's $5 waiver.** Fly waives personal-org bills under $5, which keeps the cost at about €0, but a bill of $5 or more is paid in full. Card required.
 - **Leaving is mechanical.** Moving off any vendor means a `pg_dump`/restore plus redeploying the same Docker image.
 - **Research:**
-  - `research/ping-stack-and-hosting`: [Which stack and EU hosting can run Ping for close to €0?](https://github.com/Patchalv/obs/issues/2)
-  - `research/ping-eu-hosting`: [Which EU host should run Ping's Node app?](https://github.com/Patchalv/obs/issues/10)
+  - `research/ping-stack-and-hosting`: [Which stack and EU hosting can run Ping for close to €0?](https://github.com/Patchalv/ping/issues/2)
+  - `research/ping-eu-hosting`: [Which EU host should run Ping's Node app?](https://github.com/Patchalv/ping/issues/10)

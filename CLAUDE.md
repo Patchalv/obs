@@ -18,7 +18,7 @@ There is no application code yet, so there are no build, lint or test commands. 
 
 ### Issue tracker
 
-Issues live in GitHub Issues on `Patchalv/obs`, managed with the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Issues live in GitHub Issues on `Patchalv/ping`, managed with the `gh` CLI. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

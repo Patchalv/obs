@@ -1,0 +1,7 @@
+{
+  "name": "ping",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Spark's internal staff tool for communication and work tracking.",
+  "scripts": {}
+}
