@@ -66,12 +66,12 @@ A Thread marked finished. It is hidden from its Channel unless someone searches 
 _Avoid_: Closed, finalizada, done
 
 **Mention**:
-Naming a Staff member in a Thread or Response with @ so that they always get a Ping, whatever their mute settings.
+Naming a Staff member in a Thread or Response with @ so that they always get a Ping, whatever their mute settings. Only Staff members who can read the Thread can be mentioned.
 
 ## Attention
 
 **Ping**:
-An item telling one Staff member about new activity in one Thread, with a count of what's new. It stays until that Staff member acknowledges it. (Ping is also the product's name.)
+An item telling one Staff member about other people's new activity in one Thread, with a count of what's new since they last acknowledged it. A Staff member has at most one Ping per Thread. It stays until that Staff member acknowledges it or can no longer read the Thread. (Ping is also the product's name.)
 _Avoid_: Notification, alert
 
 **Acknowledge**:
@@ -79,7 +79,7 @@ To clear a Ping by taking one of the allowed actions: mark it read, react with a
 _Avoid_: Dismiss, seen
 
 **To Do**:
-A Staff member's personal list of Threads they have committed to act on. A Thread leaves the list only when that Staff member marks it done.
+A Staff member's personal list of Threads they have committed to act on. A Thread leaves the list when that Staff member marks it done or can no longer read it. A Thread on the list still gets Pings.
 _Avoid_: Task, pending
 
 **Mute**:
