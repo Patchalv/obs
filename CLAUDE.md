@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-A pnpm monorepo: `apps/web` (Vite + React), `apps/server` (Hono on Node), `packages/shared` (zod schemas and types).
+A pnpm monorepo: `apps/web` (Vite + React), `apps/server` (Hono on Node), `packages/shared` (zod schemas and types). `README.md` has setup and the full command reference; keep it in step when commands change.
 
 - `pnpm db:up` / `pnpm db:down`: start or stop the shared local stack (`docker compose up -d --wait` / `docker compose down`): Postgres 18, PgBouncer in transaction mode, MinIO. One stack serves every worktree. `db:down` keeps the data volumes.
 - `pnpm dev`: Vite on 5173 and Hono on 3000 together. Vite proxies `/healthz` and `/api` to Hono.
