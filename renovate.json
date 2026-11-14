@@ -21,6 +21,17 @@
       "matchPackageNames": ["typescript"],
       "matchUpdateTypes": ["major", "minor"],
       "enabled": false
+    },
+    {
+      "description": "engines are minimum versions, not pins. Keep them as ranges and move them by hand together with packageManager and .nvmrc.",
+      "matchDepTypes": ["engines"],
+      "enabled": false
+    },
+    {
+      "description": "A pnpm major changes the lockfile and settings; upgrade by hand, together with engines.pnpm.",
+      "matchPackageNames": ["pnpm"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
     }
   ]
 }
