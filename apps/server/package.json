@@ -13,7 +13,14 @@
   "dependencies": {
     "@hono/node-server": "2.1.8",
     "@ping/shared": "workspace:*",
+    "better-auth": "1.7.23",
+    "drizzle-orm": "0.45.4",
     "hono": "4.13.18",
+    "pg": "8.23.1",
     "tsx": "4.23.15"
+  },
+  "devDependencies": {
+    "@types/pg": "8.23.1",
+    "drizzle-kit": "0.31.11"
   }
 }
