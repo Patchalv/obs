@@ -11,7 +11,7 @@
       "project": ["scripts/**/*.ts", ".claude/hooks/**/*.ts"]
     },
     "apps/server": {
-      "entry": ["src/index.ts"],
+      "entry": ["src/index.ts", "src/db/cli/*.ts"],
       "project": ["src/**/*.ts"]
     },
     "apps/web": {

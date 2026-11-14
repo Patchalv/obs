@@ -8,6 +8,7 @@
     "build": "vite build"
   },
   "dependencies": {
+    "better-auth": "1.7.23",
     "hono": "4.13.18",
     "react": "19.3.1",
     "react-dom": "19.3.1"

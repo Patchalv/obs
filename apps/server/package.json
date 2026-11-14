@@ -8,12 +8,22 @@
   },
   "scripts": {
     "dev": "PORT=${SERVER_PORT:-3000} tsx watch --clear-screen=false src/index.ts",
-    "start": "NODE_ENV=production tsx src/index.ts"
+    "start": "NODE_ENV=production tsx src/index.ts",
+    "db:migrate": "tsx src/db/cli/migrate.ts",
+    "db:seed": "tsx src/db/cli/seed.ts",
+    "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
     "@hono/node-server": "2.1.8",
     "@ping/shared": "workspace:*",
+    "better-auth": "1.7.23",
+    "drizzle-orm": "0.45.4",
     "hono": "4.13.18",
+    "pg": "8.23.1",
     "tsx": "4.23.15"
+  },
+  "devDependencies": {
+    "@types/pg": "8.23.1",
+    "drizzle-kit": "0.31.11"
   }
 }

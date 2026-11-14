@@ -8,3 +8,6 @@ onlyBuiltDependencies:
 overrides:
   # GHSA-g3hv-75wg-m249: typescript-eslint still asks for minimatch 10. Drop this once it doesn't.
   "@typescript-eslint/typescript-estree>minimatch": ^11.0.1
+  # GHSA-67mh-4wv8-2f99: drizzle-kit still pulls esbuild 0.18 through @esbuild-kit. Dev-only
+  # (drizzle-kit generate). Drop this once drizzle-kit doesn't.
+  "@esbuild-kit/core-utils>esbuild": ^0.25.12

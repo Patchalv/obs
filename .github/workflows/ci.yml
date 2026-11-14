@@ -19,7 +19,49 @@ jobs:
   check:
     name: check
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
+    # The same stack as compose.yaml. Services reach Postgres by its service name.
+    services:
+      postgres:
+        # Pinned to Neon's Postgres major version (18). Change it only together with Neon.
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: ping
+          POSTGRES_PASSWORD: ping
+          POSTGRES_DB: ping
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ping -d ping"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+      # Stands in for Neon's pooler; the Playwright app connects through it.
+      pgbouncer:
+        image: edoburu/pgbouncer:v1.26.1-p0
+        env:
+          DB_HOST: postgres
+          DB_USER: ping
+          DB_PASSWORD: ping
+          AUTH_TYPE: scram-sha-256
+          POOL_MODE: transaction
+          LISTEN_PORT: 6432
+        ports:
+          - 6432:6432
+      # The pooler test: transaction mode with default_pool_size=1, so every request
+      # shares one backend.
+      pgbouncer-test:
+        image: edoburu/pgbouncer:v1.26.1-p0
+        env:
+          DB_HOST: postgres
+          DB_USER: ping
+          DB_PASSWORD: ping
+          AUTH_TYPE: scram-sha-256
+          POOL_MODE: transaction
+          DEFAULT_POOL_SIZE: 1
+          LISTEN_PORT: 6433
+        ports:
+          - 6433:6433
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -44,3 +86,18 @@ jobs:
         run: pnpm audit --audit-level=moderate
       - name: Unit tests
         run: pnpm test
+      # Integration, RLS suite, catalog guard, permission matrix, PgBouncer and route
+      # coverage (the route-coverage guard runs with the unit tests).
+      - name: Integration tests
+        run: pnpm test:int
+      - name: Install Playwright's browser
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Playwright
+        run: pnpm test:e2e
+      - name: Upload Playwright traces
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7

@@ -37,6 +37,24 @@ services:
       postgres:
         condition: service_healthy
 
+  # The pooler test's PgBouncer: transaction mode with one server connection per database
+  # and user, so every request lands on the same backend. CI runs the same container.
+  pgbouncer-test:
+    image: edoburu/pgbouncer:v1.26.1-p0
+    environment:
+      DB_HOST: postgres
+      DB_USER: ping
+      DB_PASSWORD: ping
+      AUTH_TYPE: scram-sha-256
+      POOL_MODE: transaction
+      DEFAULT_POOL_SIZE: 1
+      LISTEN_PORT: 6433
+    ports:
+      - "6433:6433"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   # S3-compatible stand-in for Cloudflare R2. MinIO no longer publishes images, so this
   # is the pgsty community build of the same server.
   minio:

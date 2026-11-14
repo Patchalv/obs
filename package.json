@@ -15,6 +15,8 @@
     "start": "pnpm --filter @ping/server start",
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
+    "db:migrate": "pnpm --filter @ping/server db:migrate",
+    "db:seed": "pnpm --filter @ping/server db:seed",
     "typecheck": "tsc -b",
     "lint": "biome check . && node scripts/check-ts-directives.ts",
     "lint:fix": "biome check --write .",
@@ -22,12 +24,15 @@
     "knip": "knip",
     "depcruise": "depcruise apps packages --config .dependency-cruiser.cjs",
     "check:terms": "node scripts/check-terms/cli.ts",
-    "test": "vitest run",
-    "check": "pnpm typecheck && pnpm lint && pnpm lint:types && pnpm knip && pnpm depcruise && pnpm check:terms && pnpm test",
-    "test:related": "vitest related --run"
+    "test": "vitest run --project unit",
+    "check": "pnpm typecheck && pnpm lint && pnpm lint:types && pnpm knip && pnpm depcruise && pnpm check:terms && pnpm test && pnpm test:int",
+    "test:related": "vitest related --run",
+    "test:int": "vitest run --project integration",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.7",
+    "@playwright/test": "1.65.1",
     "@types/node": "26.6.6",
     "concurrently": "10.0.7",
     "dependency-cruiser": "18.7.2",
