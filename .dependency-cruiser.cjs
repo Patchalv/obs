@@ -5,9 +5,12 @@
 // - The ping_system pool is created in apps/server/src/db/system-pool.ts and only
 //   apps/server/src/system-actions/ may import it (ADR 0004).
 
-/** Packages that open a raw Postgres connection. */
+/**
+ * Packages that open a raw Postgres connection. Matches the bare name (not installed yet)
+ * and pnpm's resolved path (node_modules/.pnpm/<pkg>@<version>/node_modules/<pkg>/...).
+ */
 const DATABASE_DRIVERS =
-  '^(node_modules/)?(pg|pg-pool|postgres|@neondatabase/serverless|drizzle-orm/(node-postgres|postgres-js|neon-http|neon-serverless))(/|$)';
+  '(^|node_modules/)(pg|pg-pool|postgres|@neondatabase/serverless|drizzle-orm/(node-postgres|postgres-js|neon-http|neon-serverless))(/|$)';
 
 /** @type {import('dependency-cruiser').IConfiguration} */
 module.exports = {
@@ -24,7 +27,7 @@ module.exports = {
       name: 'ping-system-pool-only-in-system-actions',
       comment: 'Only apps/server/src/system-actions/ may use the ping_system pool (ADR 0004).',
       severity: 'error',
-      from: { pathNot: '^apps/server/src/(system-actions|db)/' },
+      from: { pathNot: '^apps/server/src/system-actions/' },
       to: { path: '^apps/server/src/db/system-pool' },
     },
     {
@@ -45,7 +48,7 @@ module.exports = {
   ],
   options: {
     doNotFollow: { path: 'node_modules' },
-    exclude: { path: '(^|/)(dist|node_modules/\\.tsbuild)/' },
+    exclude: { path: '^apps/[^/]+/dist/' },
     tsPreCompilationDeps: true,
     tsConfig: { fileName: 'tsconfig.json' },
     enhancedResolveOptions: {

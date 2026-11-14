@@ -2,7 +2,7 @@
 # Stop hook: the quality gate every turn must pass before Claude stops.
 #
 # Runs tsc -b, Biome, ESLint, Knip, dependency-cruiser, check:terms and `vitest related`
-# on the changed files. Skipped when nothing under apps/ or packages/ changed since the
+# on the changed files. Skipped when nothing under apps/, packages/, scripts/ or .claude/hooks/ changed since the
 # last passing run. Exit 2 sends the failures back to Claude to fix.
 #
 # Loop guard: after 3 blocked stops in a row, the gate lets Claude stop and tells the
@@ -18,12 +18,15 @@ mkdir -p "$state_dir"
 fingerprint_file="$state_dir/$session_id.fingerprint"
 blocks_file="$state_dir/$session_id.blocks"
 
-untracked() { git ls-files --others --exclude-standard -- apps packages; }
+# Code the gate guards: the apps and packages, plus the tooling scripts and hooks.
+watched=(apps packages scripts .claude/hooks)
+untracked() { git ls-files --others --exclude-standard -- "${watched[@]}"; }
+base="$(git merge-base HEAD origin/master 2>/dev/null || git rev-parse HEAD)"
 
 fingerprint() {
   {
     git rev-parse HEAD
-    git diff HEAD -- apps packages
+    git diff HEAD -- "${watched[@]}"
     untracked | while IFS= read -r f; do [ -f "$f" ] && shasum "$f"; done
   } | shasum | cut -d' ' -f1
 }
@@ -31,8 +34,8 @@ fingerprint() {
 current="$(fingerprint)"
 if [ -f "$fingerprint_file" ]; then
   [ "$current" = "$(cat "$fingerprint_file")" ] && exit 0
-elif [ -z "$(git status --porcelain -- apps packages)" ]; then
-  # First stop of the session with a clean tree: nothing this turn to check.
+elif git diff --quiet "$base" -- "${watched[@]}" && [ -z "$(untracked)" ]; then
+  # First stop of the session, and this branch changes nothing the gate guards.
   printf '%s' "$current" >"$fingerprint_file"
   exit 0
 fi
@@ -66,11 +69,10 @@ run_check() {
   fi
 }
 
-base="$(git merge-base HEAD origin/master 2>/dev/null || git rev-parse HEAD)"
 changed=()
 while IFS= read -r f; do
   [ -f "$f" ] && changed+=("$f")
-done < <({ git diff --name-only "$base" -- apps packages; untracked; } | grep -E '\.(ts|tsx)$' | sort -u)
+done < <({ git diff --name-only "$base" -- "${watched[@]}"; untracked; } | grep -E '\.(ts|tsx)$' | sort -u)
 
 run_check "tsc -b" "$bin/tsc" -b
 run_check "Biome" biome_check
