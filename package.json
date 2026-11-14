@@ -4,7 +4,7 @@
   "private": true,
   "description": "Spark's internal staff tool for communication and work tracking.",
   "type": "module",
-  "packageManager": "pnpm@10.34.9",
+  "packageManager": "pnpm@12.18.0",
   "engines": {
     "node": ">=24.11.0",
     "pnpm": ">=10.34.9"
