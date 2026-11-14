@@ -1,0 +1,25 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "includeEntryExports": true,
+  "workspaces": {
+    ".": {
+      "entry": [
+        "scripts/check-terms/cli.ts",
+        "scripts/check-ts-directives.ts",
+        ".claude/hooks/*.ts"
+      ],
+      "project": ["scripts/**/*.ts", ".claude/hooks/**/*.ts"]
+    },
+    "apps/server": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "apps/web": {
+      "entry": ["src/main.tsx"],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "packages/shared": {
+      "project": ["src/**/*.ts"]
+    }
+  }
+}

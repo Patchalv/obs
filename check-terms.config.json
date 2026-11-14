@@ -1,0 +1,23 @@
+{
+  "$comment": "Banned terms for `pnpm check:terms`. Each word is matched as a whole word (plus simple plurals) in identifiers, file names and migration SQL under apps/ and packages/, after splitting on camelCase, snake_case and punctuation. An exception names one exact identifier or file path that is allowed, with the reason.",
+  "banned": [
+    "ticket",
+    "observation",
+    "obs",
+    "seguimiento",
+    "responsable",
+    "respuesta",
+    "adjunto",
+    "finalizada",
+    "baja",
+    "recado",
+    "reply",
+    "notification",
+    "todo",
+    "bookmark",
+    "employee",
+    "coordinator",
+    "folder"
+  ],
+  "exceptions": []
+}

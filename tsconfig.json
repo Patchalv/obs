@@ -1,0 +1,10 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/shared" },
+    { "path": "./apps/server" },
+    { "path": "./apps/web" },
+    { "path": "./apps/web/tsconfig.node.json" },
+    { "path": "./tsconfig.tooling.json" }
+  ]
+}

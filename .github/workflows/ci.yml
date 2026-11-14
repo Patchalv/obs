@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The master ruleset requires this job by name. Rename it only together with
+  # .github/rulesets/master.json.
+  check:
+    name: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Biome
+        run: pnpm exec biome ci . && node scripts/check-ts-directives.ts
+      - name: ESLint
+        run: pnpm lint:types
+      - name: Knip
+        run: pnpm knip
+      - name: dependency-cruiser
+        run: pnpm depcruise
+      - name: Banned terms
+        run: pnpm check:terms
+      - name: Audit dependencies
+        run: pnpm audit --audit-level=moderate
+      - name: Unit tests
+        run: pnpm test

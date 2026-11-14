@@ -3,5 +3,35 @@
   "version": "0.0.0",
   "private": true,
   "description": "Spark's internal staff tool for communication and work tracking.",
-  "scripts": {}
+  "type": "module",
+  "packageManager": "pnpm@10.34.9",
+  "engines": {
+    "node": ">=24.11.0"
+  },
+  "scripts": {
+    "dev": "concurrently --names server,web --prefix-colors blue,magenta \"pnpm --filter @ping/server dev\" \"pnpm --filter @ping/web dev\"",
+    "build": "pnpm --filter @ping/web build",
+    "start": "pnpm --filter @ping/server start",
+    "typecheck": "tsc -b",
+    "lint": "biome check . && node scripts/check-ts-directives.ts",
+    "lint:fix": "biome check --write .",
+    "lint:types": "eslint .",
+    "knip": "knip",
+    "depcruise": "depcruise apps packages --config .dependency-cruiser.cjs",
+    "check:terms": "node scripts/check-terms/cli.ts",
+    "test": "vitest run",
+    "check": "pnpm typecheck && pnpm lint && pnpm lint:types && pnpm knip && pnpm depcruise && pnpm check:terms && pnpm test",
+    "test:related": "vitest related --run"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.7",
+    "@types/node": "24.19.2",
+    "concurrently": "10.0.7",
+    "dependency-cruiser": "18.7.2",
+    "eslint": "10.15.0",
+    "knip": "6.45.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.2",
+    "vitest": "5.1.0"
+  }
 }
