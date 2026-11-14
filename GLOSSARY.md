@@ -58,7 +58,7 @@ A sub-topic inside a Channel, started by a post that has a title and a descripti
 _Avoid_: Post, seguimiento, ticket
 
 **System thread**:
-A Thread that Ping itself starts to announce a change to a Channel, such as a new Channel admin or a switch between Public and Private. Nobody can respond as its author.
+A Thread that Ping itself starts to announce a change to a Channel, such as a new Channel admin or a Public channel turning Private. Nobody can respond as its author.
 _Avoid_: Bot post, automatic message
 
 **Thread Response**:

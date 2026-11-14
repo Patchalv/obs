@@ -11,7 +11,6 @@ Source: [What is Ping's data model?](https://github.com/Patchalv/ping/issues/11#
 - **No edit history.** Only the latest text is kept, plus who last edited it and when. System threads record Channel changes in public, and `audit_event` records security-relevant actions.
 - **`channel_id` is copied onto every child row,** so each RLS check is a single lookup. A composite foreign key `(thread_id, channel_id)` → `thread(id, channel_id)` stops the copy drifting. Threads never move between Channels.
 - **Exactly-one-target rows.** Reactions, Mentions and Attachments each live in one table with nullable `thread_id` and `thread_response_id` and a check constraint, keeping real foreign keys and cascades.
-- **Spark-wide settings** live in a single-row typed table with check constraints.
 - **No live-update event table.** The server keeps an in-memory buffer, and a client that falls behind refetches.
 - **Rich-text bodies** are ProseMirror JSON in a `jsonb` `body` column, with plain text extracted by the server into `body_text` on every save, for search and snippets ([ADR 0003](../adr/0003-rich-text-stored-as-prosemirror-json.md)).
 
@@ -40,20 +39,7 @@ Source: [What is Ping's data model?](https://github.com/Patchalv/ping/issues/11#
 - `staff_id` (primary key) → `staff_member`, `token_hash`, `expires_at` (7 days), `created_by`, `created_at`, `email_failed_at`.
 - One live token per Invited person. Resend replaces the row; accepting deletes it. Cancelling deletes the `user`, `staff_member` and `staff_invite` rows.
 
-**`staff_avatar`**
-
-- `staff_id` (primary key) → `staff_member`, `object_key` (random UUID, unique), `updated_at`.
-- One row per Staff member with a profile photo. It's a separate table so a Staff member can change their own photo without having any write access to their `staff_member` row, which holds their role.
-
 Password-reset tokens use Better Auth's own `verification` table.
-
-## Spark settings
-
-**`spark_settings`** (exactly one row)
-
-- `max_file_size_bytes`: default 20 MB, check ≤ 50 MB.
-- `max_files_per_post`: default 5, check ≤ 20.
-- `updated_at`, `updated_by`.
 
 ## Channels
 
@@ -64,6 +50,7 @@ Password-reset tokens use Better Auth's own `verification` table.
 - `resolve_policy`: `any_member` (default) or `author_and_channel_admins`.
 - `created_at`, `created_by`, `archived_at`, `archived_by`.
 - Search: a generated `search` tsvector (English) over name and description, with a GIN index.
+- Created through the `create_channel` system function, which inserts the Channel and its first Channel admin together. A plain insert of a Private channel would fail the visibility rule, because its creator isn't a member yet. See [permissions.md](permissions.md#system-functions).
 
 **`channel_member`**
 
@@ -106,7 +93,7 @@ Both tables are visible only to their owner.
 **`thread_response`**
 
 - `id`, `thread_id`, `channel_id` (composite foreign key), `author_id`, `body` (`jsonb`), `body_text`, `created_at`, `edited_at/by`, `deleted_at/by`.
-- Deleting a Thread Response keeps the row as the "Thread Response deleted" placeholder: its body is nulled (check: deleted ⇒ body is null), and its Attachments, reactions and Mentions are removed.
+- Deleting a Thread Response keeps the row as the "Thread Response deleted" placeholder: its `body` and `body_text` are nulled (check: deleted ⇒ both are null), which also empties its `search` vector, and its Attachments, reactions and Mentions are removed.
 - Search: a generated `search` tsvector over `body_text`, with a GIN index. Search excludes deleted Thread Responses.
 - Index: `(thread_id, created_at)`.
 
@@ -133,7 +120,7 @@ Both tables are visible only to their owner.
 
 ## Attention
 
-Ping, Saved and mute rows belong to one Staff member, and `ping_app` can only touch the current Staff member's own rows. Creating or bumping other people's Pings when someone posts (the fan-out) therefore runs as `ping_system`, after the server has authorised the post. See [permissions.md](permissions.md#roles).
+Ping, Saved and mute rows belong to one Staff member, and `ping_app` can only touch the current Staff member's own rows. Creating or bumping other people's Pings when someone posts (the fan-out) therefore runs through a system function, called inside the same transaction as the post. If the fan-out fails, the post rolls back with it, so no Ping is ever lost. See [permissions.md](permissions.md#system-functions).
 
 **`ping`**
 
@@ -158,7 +145,7 @@ Ping, Saved and mute rows belong to one Staff member, and `ping_app` can only to
 **`pending_file_deletion`**
 
 - `object_key`, `requested_at`, `attempts`, `last_error`.
-- Written in the same transaction as any Thread delete, Thread Response delete, Attachment removal, profile photo replacement or removal, and pending-upload sweep. An in-app sweeper deletes the storage objects and retries until they're gone, because a database transaction can't include object storage.
+- Written in the same transaction as any Thread delete, Thread Response delete, Attachment removal and pending-upload sweep. An in-app sweeper deletes the storage objects and retries until they're gone, because a database transaction can't include object storage.
 
 **`audit_event`**
 
@@ -168,7 +155,7 @@ Ping, Saved and mute rows belong to one Staff member, and `ping_app` can only to
 
 ## The clean-up routine
 
-One routine handles every way someone loses access. It deletes other people's Ping, Saved and mute rows, which `ping_app` can't touch, so it runs as `ping_system` through the system-actions module:
+One routine handles every way someone loses access. It deletes other people's Ping, Saved and mute rows, which `ping_app` can't touch, so it is a system function, called inside the same transaction as the change that caused it:
 
 | Case | Pings | Saved | Mutes | Section placement |
 | --- | --- | --- | --- | --- |
@@ -177,4 +164,4 @@ One routine handles every way someone loses access. It deletes other people's Pi
 | Channel turns Private (every non-member) | dropped | dropped | dropped | n/a |
 | Deactivated (all Channels) | dropped | dropped | dropped | dropped |
 
-The Channel-turns-Private case runs in the same transaction as the visibility change. Deactivation also deletes the person's sessions, promotes a replacement sole Channel admin where needed, and archives any Channel left with no active members.
+Deactivation also deletes the person's sessions, promotes a replacement sole Channel admin where needed, and archives any Channel left with no active members.

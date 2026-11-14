@@ -51,12 +51,14 @@ The rules the matrix encodes are in [permissions.md](permissions.md#server-layer
 - **RLS suite.** It connects as `ping_app` with no server code involved, sets `app.staff_id`, and runs raw SELECT, INSERT, UPDATE and DELETE against every table. It proves:
   - the visibility rule (Public, or you're a member, with no Admin exception);
   - owner-only rows for Ping, Saved, mute and Sections;
-  - the special policies on `staff_member`, `staff_invite`, `spark_settings`, `pending_file_deletion` and `audit_event`;
+  - the special policies on `staff_member`, `staff_invite`, `pending_file_deletion` and `audit_event`;
+  - that each [system function](permissions.md#system-functions) acts for the Staff member in `app.staff_id`, does nothing when it's unset, and can't be steered to another Staff member through its arguments;
   - failing closed when `app.staff_id` is unset.
 - **Catalog guard.** It reads `pg_catalog` and fails CI if:
   - `ping_app` or `ping_system` has BYPASSRLS or superuser;
   - either role owns any table;
-  - any table in Ping's schema lacks `relrowsecurity` and `relforcerowsecurity`, or has no policy. The only allowlisted tables are Better Auth's: `user`, `session`, `account`, `verification`.
+  - any table in Ping's schema lacks `relrowsecurity` and `relforcerowsecurity`, or has no policy. The only allowlisted tables are Better Auth's: `user`, `session`, `account`, `verification`;
+  - any `SECURITY DEFINER` function is missing from the allowlist of system functions and policy helpers, or has no pinned `search_path`.
 
 ## Pooler behaviour
 
@@ -71,7 +73,7 @@ The rules the matrix encodes are in [permissions.md](permissions.md#server-layer
   - unit tests for new pure logic;
   - Playwright changes only when the slice changes one of the smoke journeys.
 - **Tests come first,** red then green, using the `tdd` skill.
-- **Agents never weaken the guards.** Unless the issue explicitly says to, an agent must not change an existing matrix or RLS expectation, or edit the catalog-guard allowlist or the route allowlist. Any such change is listed in the PR body under a **Permission changes** heading so Patrick reviews it by hand.
+- **Agents never weaken the guards.** Unless the issue explicitly says to, an agent must not change an existing matrix or RLS expectation, or edit the catalog-guard allowlists (tables and `SECURITY DEFINER` functions) or the route allowlist. Any such change is listed in the PR body under a **Permission changes** heading so Patrick reviews it by hand.
 - **CI gate:** every PR to `master` runs every suite: unit, integration and matrix, RLS and catalog, PgBouncer, route coverage and Playwright. Branch protection requires them all to pass before merge.
 
 ## What the foundation slices owe

@@ -47,3 +47,26 @@ Writing the MVP spec showed that owner-only rows for Pings, Saved Threads and mu
 - **The `audit_event` retention sweeper.**
 
 The rule that only one system-actions module may use `ping_system` still holds. `SECURITY DEFINER` functions remain the fallback. The full policy table is in `docs/spec/permissions.md`.
+
+## Amendment (2026-11-14): system functions replace most of `ping_system`'s work
+
+The first amendment had the Ping fan-out and the losing-access clean-up run as `ping_system`. A review before the build found that this can't work as written. `ping_system` uses a second connection, and two connections can't share a transaction:
+
+- The fan-out can't see a Thread that the post's transaction hasn't committed yet, so it would have to run after the commit. A failure there loses Pings, against the principle "Nothing gets lost".
+- The spec promised that a Channel turning Private drops non-members' rows "in the same transaction", which two connections can't do.
+
+**Decision.** The steps that act for a signed-in Staff member but touch other people's rows are `SECURITY DEFINER` functions, owned by the table owner and called by `ping_app` inside the request's transaction. This is the fallback the ADR already named, now the main route.
+
+- **System functions:** the Ping fan-out, the losing-access clean-up, the Deactivation clean-up (with automatic Channel admin promotion, automatic archiving and their System threads), and Channel creation. Channel creation is here because a plain insert of a Private channel fails the visibility rule: its creator isn't a member yet.
+- **`ping_system` keeps** only the work with no signed-in Staff member: invite acceptance, `bootstrap-admin` and the three sweepers.
+- **Rules for each function:** it reads the acting Staff member from `app.staff_id` and never from an argument, pins its `search_path`, and does one fixed job. Only the system-actions module calls it.
+- **Guard:** the catalog guard fails CI if a `SECURITY DEFINER` function is missing from an explicit allowlist or has no pinned `search_path`.
+
+**Considered instead:**
+
+- **Run the whole mutation as `ping_system`** once the server has authorised it. Rejected, because row-level security would stop backing up any write.
+- **Keep two transactions and add an outbox table with a retry worker.** Rejected as more moving parts than about 20 Staff members need.
+
+**Cost:** some logic now lives in plpgsql, which the first version of this ADR tried to avoid. The functions stay small, and the RLS suite tests each one. The full list is in `docs/spec/permissions.md`.
+
+Also settled in the same review: company Admins can't change anyone's email. An Admin who could would reset that person's password and sign in as them, which is the same hole that ruled out Better Auth's admin plugin.

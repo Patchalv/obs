@@ -10,7 +10,7 @@ Product principles behind the layout: clearing Pings and working through Saved o
 
 - Dark, across the full width.
 - The search bar sits in the centre (see [Search](#search)).
-- The Staff member's avatar sits on the right. It opens their profile (display name and photo), sign-out, and for Admins the Admin screens.
+- The Staff member's avatar sits on the right. It opens their profile (display name and email), sign-out, and for Admins the Admin screens.
 
 ### Sidebar
 
@@ -36,7 +36,7 @@ The Channel bar has:
 
 - the name (with a lock icon if Private), the member count, a Mute toggle and **+ New Thread**;
 - the description;
-- **Threads**, **Files** and **Members** tabs, plus the Section picker;
+- **Threads** and **Members** tabs, plus the Section picker;
 - the Thread list controls: Status (Open, Resolved, All), Pings (All, With Pings), sort (Latest activity or Date started) and direction, with an "N Resolved hidden" note.
 
 Channel admins also reach the Channel's settings and member management from the bar. A Staff member viewing a Public channel they haven't joined sees a **Join** button in place of + New Thread.
@@ -52,7 +52,7 @@ Each **Thread row** is a white card showing:
 
 A System thread row is styled as coming from Ping, not from a person. A Deactivated author shows greyed with a "Deactivated" label.
 
-The **Files** tab lists the Channel's Attachments. The **Members** tab lists members, marks Channel admins, and shows Deactivated members greyed with their label.
+The **Members** tab lists members, marks Channel admins, and shows Deactivated members greyed with their label.
 
 ### Thread view
 
@@ -77,8 +77,7 @@ These use the same Thread rows as the Channel feed, with the Channel name on eac
 
 Reached from the avatar menu, for Admins only:
 
-- **Staff members:** everyone with their role and state. Invited people show Resend and Cancel (and "Expired, Resend" or "Email not sent, Resend" when those apply). Actions: invite, change role, change email, Deactivate, reactivate, remove a profile photo.
-- **Settings:** maximum Attachment size and maximum files per Thread or Thread Response.
+- **Staff members:** everyone with their role and state. Invited people show Resend and Cancel (and "Expired, Resend" or "Email not sent, Resend" when those apply). Actions: invite, change role, Deactivate, reactivate.
 
 ## Phone
 
@@ -95,12 +94,21 @@ Reached from the avatar menu, for Admins only:
 
 The rules behind search are in [product.md](product.md#search).
 
+## Baseline behaviours
+
+- **Long lists.** A Thread list (a Channel feed, Pings, Saved or search results) loads 50 Threads at a time, with **Load more**. An open Thread loads all its Thread Responses.
+- **Drafts.** The composer keeps an unsent draft in the browser, one per Thread and one per Channel for a new Thread, until it's sent or cleared.
+- **Browsers.** Ping supports the latest two versions of Chrome, Safari, Firefox and Edge.
+- **Accessibility.** Every action works from the keyboard, and text meets WCAG AA contrast.
+
+Source: the [plan review](README.md#changes-from-the-plan-review).
+
 ## Other flows
 
 - **Sign-in**, **forgot password** and **set password** (from an invite or reset link) pages.
 - **Accepting an invite** lands the new Staff member on **Browse channels**.
 - **Create channel:** name, description and visibility.
-- **Making a Private channel Public** shows a warning that every Staff member will be able to see its whole history.
+- **Changing your email** sends a link to the new address, and the change takes effect when you open it.
 - **Leaving as the last active Channel admin** is stopped with an explanation (see [product.md](product.md#members-and-channel-admins)).
 - **Deleting a Thread that has other people's Thread Responses** asks for confirmation and says how many Thread Responses will be deleted.
 

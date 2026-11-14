@@ -6,7 +6,7 @@ What Ping does, rule by rule. The screens are in [screens.md](screens.md), and w
 
 - A **Staff member** is a person employed by Spark who can sign in. There are about 20.
 - Each Staff member has one company role: **Admin** or **Member**.
-- Admins invite Staff members, set their role, change their email, Deactivate and reactivate them, and edit Spark-wide settings. They can also edit or delete any Thread or Thread Response in the Channels they can see.
+- Admins invite Staff members, set their role, and Deactivate and reactivate them. They can also edit or delete any Thread or Thread Response in the Channels they can see.
 - Admins see only the Private channels they are members of. Private means private, even to Admins.
 - Spark always has at least one active Admin. The last active Admin can't demote or Deactivate themself.
 - A Staff member is in one of three states:
@@ -16,16 +16,19 @@ What Ping does, rule by rule. The screens are in [screens.md](screens.md), and w
 
 ### Profiles
 
-- Every Staff member can change their own display name and upload, replace or remove their own profile photo.
-- Only Admins change a Staff member's email.
-- A profile photo is resized in the browser to 512 px on its long edge, re-encoded and stripped of all metadata, like an image Attachment. Any signed-in Staff member can see it. Without a photo, Ping shows coloured initials.
-- An Admin can remove anyone's profile photo.
+- Every Staff member can change their own display name.
+- Every Staff member can change their own email. Ping sends a link to the new address, and the change takes effect when they open it.
+- Admins can't change anyone's email. An Admin who could would be able to reset that person's password and sign in as them, which breaks "Private means private, even to Admins".
+- A wrong email on an invite is fixed by cancelling the invite and sending a new one. A Staff member locked out of both their email and their password asks Patrick, who fixes it in the database.
+- There are no profile photos in the MVP. Ping shows coloured initials.
 
-Source: decided while writing this spec.
+Source: decided while writing this spec, then changed in the [plan review](README.md#changes-from-the-plan-review).
 
 ## Sign-in, invites and password reset
 
 Sign-in is by email and password. Public sign-up is disabled: the only way in is an invite.
+
+A password must be at least 12 characters, and Better Auth's breached-password check refuses one that appears in a known breach. There is no multi-factor sign-in in the MVP.
 
 ### The first Admin
 
@@ -64,7 +67,8 @@ Source: [How do the first Admins get in, and how do invite and reset emails arri
 - Anyone can create a Channel and becomes its first **Channel admin**.
 - A Channel is **Public** (any Staff member can find, view and join it) or **Private** (only its members can find and view it).
 - A Channel's settings are its name, description, visibility, and **Who can resolve threads?**, which is either "Any Channel member" (the default) or "Thread author and Channel admins".
-- Only Channel admins change a Channel's settings. Visibility can change in either direction. Before a Private channel becomes Public, a warning says every Staff member will be able to see its whole history. Every visibility change starts a [System thread](#system-threads).
+- Only Channel admins change a Channel's settings.
+- A Public channel can be turned Private, which starts a [System thread](#system-threads). A Private channel can never be made Public. Its members wrote in it expecting privacy, and one Channel admin shouldn't be able to show their messages to all of Spark. A Channel that should have been Public is created again.
 - When a Channel turns Private, every Staff member who isn't a member loses access at once (see [Losing access](#losing-access)).
 - Channels are never deleted, by anyone. They can only be archived.
 
@@ -149,7 +153,7 @@ Source: decided while writing this spec.
 
 - A **System thread** is a Thread that Ping itself starts to announce a change to a Channel. Nobody can respond as its author.
 - Ping starts one when:
-  - a Channel's visibility changes;
+  - a Channel turns Private;
   - a Channel is archived;
   - a Deactivated sole Channel admin is replaced automatically (it names the new Channel admin and the Deactivated person, so the Channel can choose someone else).
 - A System thread stores the Staff members involved by ID and renders their names when viewed, so names stay current.
@@ -223,12 +227,11 @@ Sources: [Exactly when does a Ping appear, update and clear?](https://github.com
 ## Attachments
 
 - Images and files can be attached to Threads and Thread Responses.
-- **Limits** are Spark-wide settings that Admins edit:
-  - maximum file size: default 20 MB, ceiling 50 MB;
-  - maximum files per Thread or Thread Response: default 5, ceiling 20.
+- **Limits** are fixed in code for the MVP: 20 MB per file, and 5 files per Thread or Thread Response.
 - There's no storage quota. Monitoring warns at 80% of the storage free tier.
-- **Allowed types** are fixed in code: JPEG, PNG, WebP, GIF, HEIC, PDF, Word, Excel and PowerPoint (OOXML), OpenDocument, TXT and CSV. The server checks magic bytes as well as the extension.
-- **Images** are resized in the browser to about 2048 px on the long edge, re-encoded, and stripped of all metadata, including GPS. Other files are stored unchanged.
+- **Allowed types** are fixed in code: JPEG, PNG, WebP, GIF, PDF, Word, Excel and PowerPoint (OOXML), OpenDocument, TXT and CSV. The server checks magic bytes as well as the extension.
+- **Images** are resized in the browser to about 2048 px on the long edge, to keep uploads small. The server doesn't rely on the browser for privacy. It strips all metadata, including GPS, from every JPEG, PNG, WebP and GIF it receives. It does this by cutting the metadata segments out of the file without decoding the image, so it needs very little memory. Other files are stored unchanged.
+- **HEIC isn't accepted,** because the server can't strip it this way. iPhones normally convert a photo to JPEG when it's picked for upload.
 - **Uploading while writing:** files upload while the post is still being written, so the composer can show progress. Until the post is saved, only the uploader can see them. Uploads never posted are swept after 24 hours.
 - **Access:** exactly the Staff members who can read the Thread, including in Archived channels and Resolved threads. Every download goes through Ping's server, which checks permission and then hands out a signed link that expires in under 5 minutes. No link is ever public or permanent.
 - **Downloads** are served with `Content-Disposition: attachment` (images inline) and `X-Content-Type-Options: nosniff`. There's no virus scanning in the MVP.
@@ -291,6 +294,7 @@ Source: [What can search find in the MVP?](https://github.com/Patchalv/ping/issu
 ## Live updates
 
 - Each open browser holds one Server-Sent Events connection. It carries new Threads and Thread Responses, reactions, resolve and reopen, and Ping counts, filtered to what that Staff member can read. It also carries edits, deletions, membership changes and Channel changes, so open screens stay correct.
+- An event carries only IDs and a kind, never content. The browser then fetches what changed through the ordinary, permission-checked API, so the stream can't leak text a Staff member may not read.
 - Every user action is an ordinary request. The stream only pushes.
 - The server sends a heartbeat every 20–30 seconds. A client that reconnects resumes with `Last-Event-ID`; one that has fallen too far behind refetches.
 

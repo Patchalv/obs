@@ -36,3 +36,12 @@ Ping is a side project run by one person, and its threads hold employee and chil
 - **Research:**
   - `research/ping-stack-and-hosting`: [Which stack and EU hosting can run Ping for close to €0?](https://github.com/Patchalv/ping/issues/2)
   - `research/ping-eu-hosting`: [Which EU host should run Ping's Node app?](https://github.com/Patchalv/ping/issues/10)
+
+## Amendment (2026-11-14): Fly sizing and the Neon plan
+
+Prices were checked again before the build, and two numbers in this ADR's reasoning had moved.
+
+- **Fly.** A `shared-cpu-1x` Machine with 512 MB in Frankfurt costs about $4.26 a month, not the $3.30 first assumed. With staging and the scheduled Machines, the bill would pass $5, and Fly then charges all of it. Prod therefore runs in 256 MB, about $2.53 a month. To make that fit, the server strips image metadata by cutting segments out of the file and never decodes an image. Moving to 512 MB waits until Spark agrees to pay. The waiver is now in Fly's pricing docs for personal organisations, but it's still not a promise.
+- **Neon.** The free plan now gives 100 CU-hours a month, about 400 active hours at the smallest size, which covers the proof of concept. Neon's own production checklist says the free plan is for prototyping, running out of the allowance suspends the database until the next month, and it's unconfirmed whether Neon's DPA covers free-plan users. Ping moves to the Launch plan at go-live, about $6 a month with no minimum fee, paid by Spark.
+
+Sources, read on 2026-11-14: [Fly pricing](https://docs.fly.io/about/pricing), [Fly cost management](https://docs.fly.io/about/cost-management), [Neon plans](https://neon.com/docs/introduction/plans), [Neon production checklist](https://neon.com/docs/get-started/production-checklist).

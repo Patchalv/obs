@@ -6,13 +6,13 @@ Stack, hosting, email, deploys, backups, monitoring and security. Every account 
 
 Recorded in [ADR 0001](../adr/0001-portable-low-cost-eu-stack.md):
 
-- **Database:** Postgres on Neon, Frankfurt (`aws-eu-central-1`), free plan.
+- **Database:** Postgres on Neon, Frankfurt (`aws-eu-central-1`). Free plan for the proof of concept, Launch plan from go-live.
 - **App:** one TypeScript Node container built on Hono. It serves the API, the live-update stream and the static Vite + React SPA.
 - **Auth:** Better Auth, with its data in Ping's own Postgres. No admin plugin.
 - **Data access:** Drizzle, with SQL migrations.
 - **Rich text:** TipTap in the browser, ProseMirror JSON in the database.
 - **Live updates:** Server-Sent Events, fanned out in memory by the single app instance.
-- **Attachments and profile photos:** Cloudflare R2, in EU-jurisdiction buckets, used only through a thin S3-client module in the server. Moving elsewhere is a config change plus an object copy.
+- **Attachments:** Cloudflare R2, in EU-jurisdiction buckets, used only through a thin S3-client module in the server. Moving elsewhere is a config change plus an object copy.
 - **Email:** any SMTP provider through config, starting with Brevo.
 - **Repo:** a pnpm TypeScript monorepo:
   - `apps/web`: the Vite + React SPA;
@@ -35,13 +35,14 @@ Patrick owns `bypatrick.app`, with DNS on Cloudflare. (The `bypatrick.com` menti
 | | Prod | Staging |
 | --- | --- | --- |
 | Host | `ping.bypatrick.app` | `staging.ping.bypatrick.app` |
-| Fly app | `fra`, one `shared-cpu-1x` Machine, 512 MB, autostop off, HA off | its own app, 256 MB, autostop on |
+| Fly app | `fra`, one `shared-cpu-1x` Machine, 256 MB, autostop off, HA off | its own app, 256 MB, autostop on |
 | Database | Neon main branch | a `staging` Neon branch, reseeded with fake data, never branched from prod |
 | Storage | its own R2 EU bucket | its own R2 EU bucket |
 | Backups, uptime monitor, heartbeats | yes | no |
 
 - Both are Fly custom domains with DNS-only (unproxied) Cloudflare records, so Fly handles TLS and the live-update stream isn't buffered.
 - Both use Fly's shared IPv4 plus IPv6, never a dedicated IPv4.
+- Prod runs in 256 MB to stay under Fly's $5 waiver (see [Cost](#cost)). The slice [Staging and prod deploy pipeline](https://github.com/Patchalv/ping/issues/30) measures memory on staging. Moving prod to 512 MB is a cost Spark is asked to cover first.
 
 ## Email
 
@@ -88,11 +89,12 @@ Source: [Set up and verify an EU Cloudflare R2 bucket for Attachments](https://g
 ## Backups (prod only)
 
 - **Nightly**, a Fly scheduled Machine in `fra`:
-  - runs `pg_dump`, encrypts it with `age`, and writes it to a separate R2 EU backup bucket through a write-only token. Patrick holds the private key offline;
+  - runs `pg_dump`, encrypts it with `age`, and writes it to a separate R2 EU backup bucket through a write-only token. The backup job holds only the public key;
   - copies the Attachments bucket with `rclone sync --backup-dir`, into dated folders.
 - Backups never run on GitHub-hosted runners, because those are US-hosted.
 - **Retention:** dumps and Attachment backups are both kept 30 days, so anything deleted in Ping is gone from backups within 30 days.
-- **Restore test:** a monthly Fly scheduled Machine decrypts the latest dump with a restore-only secret, restores it into a temporary Neon branch, checks row counts and deletes the branch.
+- **Restore test:** a monthly Fly scheduled Machine decrypts the latest dump, restores it into a temporary Neon branch, checks row counts and deletes the branch.
+- **The private key** therefore lives in two places: offline with Patrick, and as a Fly secret that only the restore-test Machine can read. That is a deliberate trade. A backup nobody tests is a worse risk than a decrypt key in Fly secrets.
 - **Restore drill:** one manual drill before go-live, written up as a runbook.
 
 ## Monitoring
@@ -108,16 +110,20 @@ Source: [Set up and verify an EU Cloudflare R2 bucket for Attachments](https://g
 
 ## Cost
 
-- **Fly:** about $4 a month (prod about $3.30; staging, backup and restore under $0.50 together), under Fly's $5 waiver for personal orgs. A bill of $5 or more is paid in full, and Fly has no spend cap.
+Ping stays free, or close to it, until Spark agrees to pay for something.
+
+- **Fly:** about $3 a month, under Fly's $5 waiver for personal orgs. Prod at 256 MB in Frankfurt is about $2.53 (Fly's $2.19 base price times its 1.154 Frankfurt multiplier, checked 2026-11-14). Staging, backup and restore add under $0.50 together. At 512 MB, prod alone would be about $4.26 and the total would pass $5.
+- **The waiver** is in Fly's pricing docs but isn't a promise. A bill of $5 or more is paid in full, and Fly has no spend cap.
 - **Runbook:** look at Fly usage on the first of each month. If the projection reaches $4.50, the first lever is turning staging off.
-- **Neon, R2, Brevo, Better Stack, Sentry:** free plans, watched by the quota check where they have limits.
+- **Neon:** free during the proof of concept. The free plan gives 100 CU-hours a month, about 400 active hours at the smallest size, and Ping's working-day use needs about 220. Running out suspends the database until the next month. From go-live Ping moves to the Launch plan, which has no minimum fee and should cost about $6 a month. Spark covers that.
+- **R2, Brevo, Better Stack, Sentry:** free plans, watched by the quota check where they have limits.
 - **Hard cap:** €50 a month across everything.
 
 ## Baseline security
 
 - **Transport:** Fly `force_https` and Fly-managed TLS.
 - **Headers:** Hono `secureHeaders` with a strict same-origin CSP. Sentry is the only third-party origin, since Attachments are served through the server.
-- **Auth:** Better Auth's in-memory rate limiter on sign-in, password reset and invite routes, plus the per-email reset limit. Cookies are `Secure` and `SameSite=Lax`.
+- **Auth:** Better Auth's in-memory rate limiter on sign-in, password reset and invite routes, plus the per-email reset limit. Passwords are at least 12 characters and checked against known breaches. Cookies are `Secure` and `SameSite=Lax`.
 - **Dependencies:** Renovate weekly with grouped updates, and `pnpm audit` in CI.
 - **Logs** never contain message bodies or email addresses.
 - **Audit log:** see [product.md](product.md#audit-log).
