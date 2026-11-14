@@ -7,4 +7,4 @@ onlyBuiltDependencies:
 
 overrides:
   # GHSA-g3hv-75wg-m249: typescript-eslint still asks for minimatch 10. Drop this once it doesn't.
-  "@typescript-eslint/typescript-estree>minimatch": ^11.0.1
+  "@typescript-eslint/typescript-estree>minimatch": 11.0.8

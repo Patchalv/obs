@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@typescript-eslint/typescript-estree>minimatch': ^11.0.1
+  '@typescript-eslint/typescript-estree>minimatch': 11.0.8
 
 importers:
 
