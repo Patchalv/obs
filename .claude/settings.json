@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "enabledPlugins": {
+    "neon-postgres@neon": false
+  },
+  "permissions": {
+    "allow": [
+      "Bash(pnpm *)",
+      "Bash(docker compose *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git show*)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git switch *)",
+      "Bash(git checkout *)",
+      "Bash(git branch*)",
+      "Bash(git fetch*)",
+      "Bash(git merge *)",
+      "Bash(git rebase *)",
+      "Bash(git stash*)",
+      "Bash(git restore *)",
+      "Bash(git rev-parse *)",
+      "Bash(git worktree *)",
+      "Bash(git cat-file *)",
+      "Bash(git ls-files*)",
+      "Bash(git push -u origin *)",
+      "Bash(git push origin *)",
+      "Bash(gh issue *)",
+      "Bash(gh pr create*)",
+      "Bash(gh pr view*)",
+      "Bash(vitest *)",
+      "Bash(playwright *)"
+    ],
+    "ask": [
+      "Edit(./check-terms.config.json)",
+      "Write(./check-terms.config.json)",
+      "Edit(./.dependency-cruiser.cjs)",
+      "Write(./.dependency-cruiser.cjs)",
+      "Edit(./biome.json)",
+      "Write(./biome.json)",
+      "Edit(./eslint.config.js)",
+      "Write(./eslint.config.js)",
+      "Edit(./knip.json)",
+      "Write(./knip.json)",
+      "Edit(./tsconfig.base.json)",
+      "Write(./tsconfig.base.json)",
+      "Edit(./.claude/settings.json)",
+      "Write(./.claude/settings.json)",
+      "Edit(./.claude/hooks/**)",
+      "Write(./.claude/hooks/**)",
+      "Edit(./.github/workflows/**)",
+      "Write(./.github/workflows/**)",
+      "Edit(./apps/server/src/test/permission-matrix/**)",
+      "Write(./apps/server/src/test/permission-matrix/**)",
+      "Edit(./apps/server/src/test/route-coverage*)",
+      "Write(./apps/server/src/test/route-coverage*)",
+      "Edit(./apps/server/src/test/catalog*)",
+      "Write(./apps/server/src/test/catalog*)",
+      "Bash(fly *)",
+      "Bash(neonctl *)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.local)",
+      "Read(./.env.*.local)",
+      "Read(./.env.development)",
+      "Read(./.env.test)",
+      "Read(./.env.staging)",
+      "Read(./.env.production)",
+      "Read(./**/.env)",
+      "Read(./**/.env.local)",
+      "Read(./**/.env.*.local)",
+      "Read(./**/.env.development)",
+      "Read(./**/.env.test)",
+      "Read(./**/.env.staging)",
+      "Read(./**/.env.production)",
+      "Bash(fly secrets*)",
+      "Bash(fly deploy*)",
+      "Bash(gh pr merge*)",
+      "Bash(git push origin master*)",
+      "Bash(git push origin HEAD:master*)",
+      "Bash(git push * master)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f*)",
+      "Bash(git push --force-with-lease*)",
+      "Bash(git push * --force-with-lease*)",
+      "Bash(git push *:master*)",
+      "Bash(git push *refs/heads/master*)",
+      "Bash(git push * +*)",
+      "Bash(neonctl branches delete*)",
+      "Bash(neonctl branch delete*)",
+      "mcp__supabase",
+      "mcp__rea",
+      "mcp__computer-use"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ ! -f \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" ] || \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" hook",
+            "timeout": 5,
+            "statusMessage": "Preparing build session"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/hooks/migration-guard.ts\"",
+            "timeout": 10,
+            "statusMessage": "Checking migration is not applied"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}/.claude/hooks/post-edit.sh\"",
+            "timeout": 20,
+            "statusMessage": "Biome, plus Impeccable for apps/web"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}/.claude/hooks/stop-gate.sh\"",
+            "timeout": 300,
+            "statusMessage": "Stop gate: tsc, Biome, ESLint, Knip, depcruise, terms, tests"
+          },
+          {
+            "type": "command",
+            "command": "[ ! -f \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" ] || \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" hook",
+            "timeout": 30,
+            "statusMessage": "Design deep pass"
+          }
+        ]
+      }
+    ]
+  }
+}

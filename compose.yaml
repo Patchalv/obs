@@ -1,0 +1,56 @@
+# Local stack for development and integration tests. One shared stack serves every
+# worktree: the fixed project name stops Compose naming a new stack after each folder.
+name: ping
+
+services:
+  postgres:
+    # Pinned to Neon's Postgres major version (18). Change it only together with Neon.
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: ping
+      POSTGRES_PASSWORD: ping
+      POSTGRES_DB: ping
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ping -d ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  # Stands in for Neon's pooler: transaction mode, so session state never survives
+  # between transactions. No database name is set, so every worktree's database works.
+  pgbouncer:
+    image: edoburu/pgbouncer:v1.26.1-p0
+    environment:
+      DB_HOST: postgres
+      DB_USER: ping
+      DB_PASSWORD: ping
+      AUTH_TYPE: scram-sha-256
+      POOL_MODE: transaction
+      LISTEN_PORT: 6432
+    ports:
+      - "6432:6432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # S3-compatible stand-in for Cloudflare R2. MinIO no longer publishes images, so this
+  # is the pgsty community build of the same server.
+  minio:
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: ping
+      MINIO_ROOT_PASSWORD: ping-minio-local
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+
+volumes:
+  postgres-data:
+  minio-data:
