@@ -12,6 +12,8 @@
     "dev": "concurrently --names server,web --prefix-colors blue,magenta \"pnpm --filter @ping/server dev\" \"pnpm --filter @ping/web dev\"",
     "build": "pnpm --filter @ping/web build",
     "start": "pnpm --filter @ping/server start",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
     "typecheck": "tsc -b",
     "lint": "biome check . && node scripts/check-ts-directives.ts",
     "lint:fix": "biome check --write .",

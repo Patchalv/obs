@@ -15,7 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A pnpm monorepo: `apps/web` (Vite + React), `apps/server` (Hono on Node), `packages/shared` (zod schemas and types).
 
-- `docker compose up -d`: the shared local stack (Postgres 18, PgBouncer in transaction mode, MinIO). One stack serves every worktree.
+- `pnpm db:up` / `pnpm db:down`: start or stop the shared local stack (`docker compose up -d --wait` / `docker compose down`): Postgres 18, PgBouncer in transaction mode, MinIO. One stack serves every worktree. `db:down` keeps the data volumes.
 - `pnpm dev`: Vite on 5173 and Hono on 3000 together. Vite proxies `/healthz` and `/api` to Hono.
 - `pnpm build`, then `pnpm start`: Hono serves the built SPA and `/healthz`.
 - `pnpm test`: all unit tests (Vitest). `pnpm test:related <files>` runs the tests that touch those files.
@@ -26,7 +26,7 @@ A pnpm monorepo: `apps/web` (Vite + React), `apps/server` (Hono on Node), `packa
 - One issue per session, with `/clear` or a new session between issues. Build with `/mattpocock-skills:implement`.
 - Every slice runs in its own worktree on a branch named `<issue#>-<slug>`. `.worktreeinclude` copies `.env.local`.
 - One slice at a time until the exemplar slice ("create a Channel and open it") is merged; after that, up to two in parallel.
-- Hooks: Biome runs after every edit (plus Impeccable's detector in `apps/web/`). The Stop gate runs `tsc -b`, Biome, ESLint, Knip, dependency-cruiser, `check:terms` and `vitest related` on changed files, and needs `docker compose up -d`. Edits to migrations already on `origin/master` are blocked.
+- Hooks: Biome runs after every edit (plus Impeccable's detector in `apps/web/`). The Stop gate runs `tsc -b`, Biome, ESLint, Knip, dependency-cruiser, `check:terms` and `vitest related` on changed files, and needs `pnpm db:up`. Edits to migrations already on `origin/master` are blocked.
 - Any slice touching `apps/web` starts `ping-dev` from `.claude/launch.json` and checks the change in the browser before the PR.
 - **Opening the PR:** after `/implement`, push and open a **ready** PR without asking when every local suite is green, the Stop gate passes and every hard `code-review` violation is fixed. Write the body with the `pr` skill, fill `.github/pull_request_template.md` and say `Closes #n`. Otherwise open a **draft** PR that says what blocks it.
 - **After opening:** turn on Auto-fix and answer Patrick's PR comments, CI failures and conflicts. Never merge; Patrick merges. Never deploy.

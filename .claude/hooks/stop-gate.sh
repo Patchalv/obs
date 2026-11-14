@@ -53,7 +53,7 @@ block() {
 }
 
 if ! docker info >/dev/null 2>&1 || [ -z "$(docker compose ps --status running -q postgres 2>/dev/null)" ]; then
-  echo "Stop gate: Docker or the local stack isn't running. Run \`docker compose up -d\`, then try again." >&2
+  echo "Stop gate: Docker or the local stack isn't running. Run \`pnpm db:up\` (docker compose up -d), then try again." >&2
   block
 fi
 
