@@ -48,7 +48,9 @@ export async function buildTemplate(): Promise<void> {
       [`${prefix}\\_%`],
     );
     for (const { datname } of old.rows) {
-      await client.query(`drop database if exists ${client.escapeIdentifier(datname)} with (force)`);
+      await client.query(
+        `drop database if exists ${client.escapeIdentifier(datname)} with (force)`,
+      );
     }
     await client.query(`create database ${client.escapeIdentifier(templateName)}`);
   });
@@ -110,7 +112,7 @@ export type Query = <R extends pg.QueryResultRow = Record<string, unknown>>(
 ) => Promise<pg.QueryResult<R>>;
 
 /** Runs `fn` with a raw connection to `url`, closing it afterwards. */
-export async function withConnection<T>(url: string, fn: (query: Query) => Promise<T>): Promise<T> {
+async function withConnection<T>(url: string, fn: (query: Query) => Promise<T>): Promise<T> {
   const client = new pg.Client({ connectionString: url });
   await client.connect();
   try {
@@ -180,7 +182,9 @@ export async function createStaffMember(
   };
   testPasswordHash ??= hashPassword(TEST_PASSWORD);
   const passwordHash = await testPasswordHash;
-  const deactivatedBy = options.deactivated ? (await createStaffMember({ role: 'admin' })).id : null;
+  const deactivatedBy = options.deactivated
+    ? (await createStaffMember({ role: 'admin' })).id
+    : null;
 
   await asOwner(async (query) => {
     await query('begin');
@@ -209,19 +213,23 @@ export async function createStaffMember(
   return fixture;
 }
 
-/** Row counts for every table in the public schema, read as the owner. */
-export async function tableRowCounts(): Promise<Record<string, number>> {
+/**
+ * A checksum of every row of every table in the public schema, read as the owner. Two
+ * equal snapshots mean nothing was inserted, updated or deleted in between.
+ */
+export async function databaseSnapshot(): Promise<Record<string, string>> {
   return asOwner(async (query) => {
     const tables = await query<{ name: string }>(
       `select tablename as name from pg_tables where schemaname = 'public' order by tablename`,
     );
-    const counts: Record<string, number> = {};
+    const snapshot: Record<string, string> = {};
     for (const { name } of tables.rows) {
-      const result = await query<{ n: string }>(
-        `select count(*)::text as n from public.${pg.escapeIdentifier(name)}`,
+      const result = await query<{ n: string; sum: string | null }>(
+        `select count(*)::text as n, md5(string_agg(t::text, ',' order by t::text)) as sum
+           from public.${pg.escapeIdentifier(name)} t`,
       );
-      counts[name] = Number(result.rows[0]?.n);
+      snapshot[name] = `${result.rows[0]?.n}:${result.rows[0]?.sum ?? ''}`;
     }
-    return counts;
+    return snapshot;
   });
 }

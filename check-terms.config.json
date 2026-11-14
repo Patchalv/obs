@@ -19,5 +19,10 @@
     "coordinator",
     "folder"
   ],
-  "exceptions": []
+  "exceptions": [
+    {
+      "match": "migrationsFolder",
+      "reason": "Drizzle's migrator option name (drizzle-orm/node-postgres/migrator), not Ping vocabulary."
+    }
+  ]
 }

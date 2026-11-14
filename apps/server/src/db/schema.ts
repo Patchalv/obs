@@ -1,6 +1,8 @@
 // Ping's tables, as Drizzle sees them. drizzle-kit generates the table DDL from this file.
 // Roles, grants, row-level security and policies live in hand-written SQL migrations,
 // because Drizzle doesn't emit FORCE ROW LEVEL SECURITY (ADR 0004).
+
+import { sql } from 'drizzle-orm';
 import {
   type AnyPgColumn,
   boolean,
@@ -12,7 +14,6 @@ import {
   timestamp,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
 
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
 const updatedAt = () =>

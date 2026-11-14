@@ -2,14 +2,15 @@
 // the permission matrix and the route-coverage guard.
 import { randomUUID } from 'node:crypto';
 import { createApp } from '../app';
-import { createAuth } from '../auth';
+import { type Auth, createAuth } from '../auth';
 import { createDatabase, type Database } from '../db';
 import { testUrls } from '../db/test-support';
 
-export const TEST_ORIGIN = 'http://localhost:5173';
+const TEST_ORIGIN = 'http://localhost:5173';
 
 export type TestApp = {
   app: ReturnType<typeof createApp>;
+  auth: Auth;
   database: Database;
   close(): Promise<void>;
 };
@@ -21,11 +22,11 @@ export function createTestApp(): TestApp {
     baseUrl: TEST_ORIGIN,
     trustedOrigins: [TEST_ORIGIN],
   });
-  return { app: createApp({ auth }), database, close: () => database.close() };
+  return { app: createApp({ auth }), auth, database, close: () => database.close() };
 }
 
 /** A fresh client IP per call, so Better Auth's rate limiter treats each test apart. */
-export function randomIp(): string {
+function randomIp(): string {
   const bytes = randomUUID().replaceAll('-', '');
   return `10.${[0, 2, 4].map((i) => Number.parseInt(bytes.slice(i, i + 2), 16)).join('.')}`;
 }
@@ -57,7 +58,7 @@ export async function signIn(
 }
 
 /** Turns a response's Set-Cookie headers into a Cookie request header. */
-export function cookieHeader(res: Response): string {
+function cookieHeader(res: Response): string {
   return res.headers
     .getSetCookie()
     .map((cookie) => cookie.split(';')[0])

@@ -5,7 +5,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import pg from 'pg';
 
-const migrationsFolder = fileURLToPath(new URL('./migrations', import.meta.url));
+const migrationsDir = fileURLToPath(new URL('./migrations', import.meta.url));
 
 type RolePasswords = { pingApp: string; pingSystem: string };
 
@@ -16,7 +16,7 @@ export async function runMigrations(
   const client = new pg.Client({ connectionString: ownerUrl });
   await client.connect();
   try {
-    await migrate(drizzle(client), { migrationsFolder });
+    await migrate(drizzle(client), { migrationsFolder: migrationsDir });
     if (options.rolePasswords) {
       await setRolePasswords(client, options.rolePasswords);
     }

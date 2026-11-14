@@ -12,7 +12,7 @@ import { CLIENT_IP_HEADERS, clientIp } from './client-ip';
 
 const SEVEN_DAYS = 60 * 60 * 24 * 7;
 
-export const DEACTIVATED_CODE = 'STAFF_MEMBER_DEACTIVATED';
+const DEACTIVATED_CODE = 'STAFF_MEMBER_DEACTIVATED';
 
 export function createAuth(database: Database, config: ServerConfig['auth']) {
   return betterAuth({

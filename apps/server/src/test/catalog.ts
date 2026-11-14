@@ -5,13 +5,13 @@
 import type { Query } from '../db/test-support';
 
 /** Better Auth's tables, the only tables in public without row-level security. */
-export const TABLES_WITHOUT_RLS = ['account', 'session', 'user', 'verification'];
+const TABLES_WITHOUT_RLS = ['account', 'session', 'user', 'verification'];
 
 /**
  * Every SECURITY DEFINER function: the system functions (permissions.md › System
  * functions) and the policy helpers. Each must pin its search_path.
  */
-export const SECURITY_DEFINER_FUNCTIONS = [
+const SECURITY_DEFINER_FUNCTIONS = [
   // Policy helper: is the acting Staff member an active Admin?
   'current_staff_is_admin',
 ];

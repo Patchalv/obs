@@ -78,7 +78,12 @@ describe('signing in', () => {
     const ip = uniqueIp();
     await postSignIn({ email: member.email, password: member.password }, ip);
     expect(await auditFor(ip)).toEqual([
-      { actor_id: member.id, kind: 'sign_in_succeeded', target_staff_id: member.id, ip_address: ip },
+      {
+        actor_id: member.id,
+        kind: 'sign_in_succeeded',
+        target_staff_id: member.id,
+        ip_address: ip,
+      },
     ]);
     expect(await auditRowsAsText(ip)).not.toContain(member.email);
   });
@@ -133,7 +138,9 @@ describe('signing in', () => {
     const ip = uniqueIp();
     const statuses: number[] = [];
     for (let i = 0; i < 6; i++) {
-      statuses.push((await postSignIn({ email: member.email, password: 'wrong-password-1' }, ip)).status);
+      statuses.push(
+        (await postSignIn({ email: member.email, password: 'wrong-password-1' }, ip)).status,
+      );
     }
     expect(statuses).toContain(429);
   });
@@ -162,7 +169,9 @@ describe('public sign-up', () => {
       body: JSON.stringify({ email, password: 'a-long-enough-password', name: 'Someone' }),
     });
     expect(res.status).toBeGreaterThanOrEqual(400);
-    const users = await asOwner((query) => query('select id from "user" where email = $1', [email]));
+    const users = await asOwner((query) =>
+      query('select id from "user" where email = $1', [email]),
+    );
     expect(users.rowCount).toBe(0);
   });
 });

@@ -21,10 +21,18 @@ describe('withStaffTx through PgBouncer (transaction mode, pool size 1)', () => 
     const a = await createStaffMember();
     const b = await createStaffMember();
 
-    const requestA = await db.withStaffTx(a.id, async (tx) => (await tx.execute<WhoAmI>(whoAmI)).rows[0]);
+    const requestA = await db.withStaffTx(
+      a.id,
+      async (tx) => (await tx.execute<WhoAmI>(whoAmI)).rows[0],
+    );
     const between = (await db.authDb.execute<WhoAmI>(whoAmI)).rows[0];
-    const requestB = await db.withStaffTx(b.id, async (tx) => (await tx.execute<WhoAmI>(whoAmI)).rows[0]);
-    const anonymous = await db.withAnonymousTx(async (tx) => (await tx.execute<WhoAmI>(whoAmI)).rows[0]);
+    const requestB = await db.withStaffTx(
+      b.id,
+      async (tx) => (await tx.execute<WhoAmI>(whoAmI)).rows[0],
+    );
+    const anonymous = await db.withAnonymousTx(
+      async (tx) => (await tx.execute<WhoAmI>(whoAmI)).rows[0],
+    );
 
     // One backend served all of them, so the test can't pass by luck of routing.
     expect(new Set([requestA?.pid, between?.pid, requestB?.pid, anonymous?.pid]).size).toBe(1);
