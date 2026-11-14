@@ -8,7 +8,7 @@ So far the repo has the foundations only. The server answers `/healthz` and serv
 
 You need:
 
-- **Node 24.** `.nvmrc` pins it, so `nvm use` picks the right version.
+- **Node 26.** `.nvmrc` pins it, so `nvm use` picks the right version.
 - **pnpm 10.34.9.** `package.json` pins it. Run `corepack enable` once and corepack provides that version whenever you run `pnpm` in this repo. An older pnpm refuses to install here, because pnpm 9 silently drops the overrides in `pnpm-workspace.yaml` from the lockfile.
 - **Docker** (Docker Desktop or OrbStack), for the local Postgres, PgBouncer and MinIO.
 
