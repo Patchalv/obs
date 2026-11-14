@@ -17,3 +17,7 @@ coverage/
 
 # Wrangler local state
 .wrangler/
+
+# Playwright output
+test-results/
+playwright-report/
