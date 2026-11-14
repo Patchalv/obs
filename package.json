@@ -6,7 +6,8 @@
   "type": "module",
   "packageManager": "pnpm@10.34.9",
   "engines": {
-    "node": ">=24.11.0"
+    "node": ">=24.11.0",
+    "pnpm": ">=10.34.9"
   },
   "scripts": {
     "dev": "concurrently --names server,web --prefix-colors blue,magenta \"pnpm --filter @ping/server dev\" \"pnpm --filter @ping/web dev\"",
