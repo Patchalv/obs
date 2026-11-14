@@ -3,10 +3,19 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { createApp } from './app';
+import { createAuth } from './auth';
+import { createDatabase } from './db';
+
+// Never connects: these routes don't touch the database.
+const auth = createAuth(createDatabase('postgres://nobody@localhost:1/none'), {
+  secret: 'unit-test-secret-not-used-for-anything',
+  baseUrl: 'http://localhost:3000',
+  trustedOrigins: ['http://localhost:3000'],
+});
 
 describe('GET /healthz', () => {
   it('answers ok', async () => {
-    const res = await createApp().request('/healthz');
+    const res = await createApp({ auth }).request('/healthz');
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ status: 'ok' });
   });
@@ -22,30 +31,30 @@ describe('serving the built SPA', () => {
   }
 
   it('serves index.html at the root', async () => {
-    const res = await createApp({ webDistDir: builtSpa() }).request('/');
+    const res = await createApp({ auth, webDistDir: builtSpa() }).request('/');
     expect(res.status).toBe(200);
     expect(await res.text()).toContain('<title>Ping</title>');
   });
 
   it('serves built assets', async () => {
-    const res = await createApp({ webDistDir: builtSpa() }).request('/assets/main.js');
+    const res = await createApp({ auth, webDistDir: builtSpa() }).request('/assets/main.js');
     expect(res.status).toBe(200);
     expect(await res.text()).toBe('console.log(1);');
   });
 
   it('falls back to index.html for client-side routes', async () => {
-    const res = await createApp({ webDistDir: builtSpa() }).request('/channels/123');
+    const res = await createApp({ auth, webDistDir: builtSpa() }).request('/channels/123');
     expect(res.status).toBe(200);
     expect(await res.text()).toContain('<title>Ping</title>');
   });
 
   it('does not answer unknown API paths with the SPA', async () => {
-    const res = await createApp({ webDistDir: builtSpa() }).request('/api/nothing-here');
+    const res = await createApp({ auth, webDistDir: builtSpa() }).request('/api/nothing-here');
     expect(res.status).toBe(404);
   });
 
   it('still answers /healthz', async () => {
-    const res = await createApp({ webDistDir: builtSpa() }).request('/healthz');
+    const res = await createApp({ auth, webDistDir: builtSpa() }).request('/healthz');
     expect(await res.json()).toEqual({ status: 'ok' });
   });
 });
