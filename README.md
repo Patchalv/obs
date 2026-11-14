@@ -2,7 +2,7 @@
 
 Ping is Spark's internal staff tool for communication and work tracking: Channels, Threads, Thread Responses, Pings and Saved. `GLOSSARY.md` defines every term, and the code uses them as written there.
 
-So far the repo has the foundations only. The server answers `/healthz` and serves a placeholder page. There's no database code, sign-in or product feature yet.
+So far the repo has the foundations: the database with its two permission roles and row-level security, the test harnesses, and sign-in. A signed-in Staff member sees a placeholder page with their name. There are no product features yet.
 
 ## Setup
 
@@ -31,12 +31,16 @@ pnpm db:up
 ```
 
 ```bash
+pnpm db:seed
+```
+
+```bash
 pnpm dev
 ```
 
-Open http://localhost:5173. The page should say "Server: ok", which means the React app reached the server through the typed client.
+Open http://localhost:5173 and sign in as a seeded Staff member, for example `jordi.puig@example.com` with the password `ping-local-dev-password`. `docs/testing.md` lists every seeded Staff member.
 
-There are no secrets to set up yet. `.env.example` lists every environment variable the code reads, and each has a working default.
+There are no secrets to set up locally. `.env.example` lists every environment variable the code reads, and each has a working local default.
 
 ## Commands
 
@@ -50,25 +54,30 @@ There are no secrets to set up yet. `.env.example` lists every environment varia
 
 `pnpm start` without a build serves `/healthz` only. Rebuild after every change you want to see there.
 
+`pnpm start` runs with `NODE_ENV=production`, so it refuses to start without `DATABASE_URL`, `SYSTEM_DATABASE_URL`, `BETTER_AUTH_URL` and `BETTER_AUTH_SECRET`. Locally, copy the values from `.env.example` into `.env.local` and set `BETTER_AUTH_URL=http://localhost:3000`. `pnpm test:e2e` sets its own.
+
 ### Local services
 
 | Command | What it does |
 | --- | --- |
 | `pnpm db:up` | Starts Postgres, PgBouncer and MinIO in Docker (`docker compose up -d --wait`) and waits until all three are healthy. |
 | `pnpm db:down` | Stops them and removes the containers (`docker compose down`). The data volumes stay, so the next `db:up` starts where you left off. |
+| `pnpm db:migrate` | Applies the migrations as the owner role and sets the local passwords of the `ping_app` and `ping_system` roles. |
+| `pnpm db:seed` | Runs `db:migrate`, then loads fake Staff members: one Admin, three Members and one Deactivated. They all use the password `ping-local-dev-password`. Safe to run again. |
 
-The app doesn't use the database yet, so `pnpm dev` works without these. The integration tests and Claude Code's Stop gate need them running.
+`pnpm dev`, the integration tests, Playwright and Claude Code's Stop gate all need them running.
 
 Every worktree shares one stack. The Compose project is named `ping` whichever folder you run it from.
 
 | Service | Address | Login |
 | --- | --- | --- |
 | Postgres 18 | `localhost:5432` | `ping` / `ping`, database `ping` |
-| PgBouncer (transaction mode) | `localhost:6432` | same as Postgres |
+| PgBouncer (transaction mode) | `localhost:6432` | same as Postgres, plus `ping_app` / `ping_app` and `ping_system` / `ping_system` |
+| PgBouncer for the pooler test (`default_pool_size=1`) | `localhost:6433` | same |
 | MinIO S3 API | `localhost:9000` | `ping` / `ping-minio-local` |
 | MinIO console | http://localhost:9001 | same as the S3 API |
 
-Postgres is pinned to 18 to match Neon. PgBouncer runs in transaction mode like Neon's pooler, so session state never carries over between transactions. The app will connect through it. MinIO stands in for Cloudflare R2.
+Postgres is pinned to 18 to match Neon. PgBouncer runs in transaction mode like Neon's pooler, so session state never carries over between transactions. The app connects through it as `ping_app`. MinIO stands in for Cloudflare R2.
 
 To open a Postgres shell through PgBouncer:
 
@@ -78,7 +87,7 @@ docker compose exec postgres psql "postgres://ping:ping@pgbouncer:6432/ping"
 
 ### Checks
 
-`pnpm check` runs everything below in order and stops at the first failure. CI runs the same checks plus `pnpm audit` on every pull request, and they must pass before a merge.
+`pnpm check` runs everything below except `pnpm test:e2e`, in order, and stops at the first failure. It needs `pnpm db:up`. CI runs the same checks plus `pnpm audit` and Playwright on every pull request, and they must pass before a merge. `docs/testing.md` explains each test suite.
 
 | Command | What it catches |
 | --- | --- |
@@ -89,7 +98,9 @@ docker compose exec postgres psql "postgres://ping:ping@pgbouncer:6432/ping"
 | `pnpm knip` | Unused files, exports and dependencies. |
 | `pnpm depcruise` | Imports that cross the boundaries: raw database drivers outside `apps/server/src/db/`, the system pool outside `system-actions/`, runtime server code in `apps/web`, and server code in `packages/shared`. |
 | `pnpm check:terms` | Banned words in identifiers, file names and migration SQL, such as `ticket`, `notification` or `todo`. The list and its exceptions are in `check-terms.config.json`. Use the `GLOSSARY.md` term instead. |
-| `pnpm test` | All unit tests (Vitest). |
+| `pnpm test` | Unit tests (Vitest), including the route-coverage guard. No database. |
+| `pnpm test:int` | Integration tests against the local stack: the RLS suite, the catalog guard, the permission matrix, sign-in and the PgBouncer test. |
+| `pnpm test:e2e` | Playwright: builds the app, seeds a `ping_e2e` database and runs the sign-in journey at laptop and phone size. Not part of `pnpm check`. |
 | `pnpm test:related <files>` | Only the tests that import the given files. |
 
 Run `pnpm check` before you push. To fix a failure, run its command on its own, since the output is shorter.
@@ -98,10 +109,14 @@ Run `pnpm check` before you push. To fix a failure, run its command on its own, 
 
 ```text
 apps/
-  server/          Hono app: /healthz, the API, serves the built SPA
+  server/          Hono app: /healthz, Better Auth, the API, serves the built SPA
+    src/db/        the only place that opens database connections; schema and migrations
+    src/system-actions/  the only user of the ping_system pool and of system functions
+    src/test/      guards and harnesses: RLS suite, catalog guard, permission matrix
   web/             Vite + React SPA; talks to the server only through the typed hc client
 packages/
   shared/          zod schemas and types used by both apps; never imports server code
+e2e/               Playwright smoke journeys
 scripts/           check:terms and the @ts-expect-error check
 docs/spec/         the MVP spec
 docs/adr/          architecture decisions
@@ -117,8 +132,14 @@ compose.yaml       local Postgres, PgBouncer and MinIO
 | `PORT` | 5173 in dev, 3000 in `start` | The port you open: Vite in `pnpm dev`, Hono in `pnpm start` and production. |
 | `SERVER_PORT` | 3000 | Hono's port during `pnpm dev`. Vite forwards `/healthz` and `/api` to it. |
 | `WEB_DIST_DIR` | `apps/web/dist` | Where `pnpm start` looks for the built app. |
+| `DATABASE_URL` | `ping_app` through local PgBouncer | The app's request role. Required in production. |
+| `SYSTEM_DATABASE_URL` | `ping_system` through local PgBouncer | The role for work with no signed-in Staff member. Required in production. |
+| `MIGRATION_DATABASE_URL` | the local owner, `ping` | Migrations and the dev seed only. The running app never uses it. |
+| `BETTER_AUTH_URL` | `http://localhost:$PORT` | The URL people open. Required in production. |
+| `BETTER_AUTH_SECRET` | a local-only value | Signs sessions. Required in production. |
+| `BETTER_AUTH_TRUSTED_ORIGINS` | the auth URL plus ports 5173 and 3000 | Origins allowed to call the auth routes, comma-separated. |
 
-Nothing loads `.env` files yet, so set these in your shell, for example `PORT=4000 pnpm start`. Loading `.env.local` comes with the database work. `.env` and `.env.*` are gitignored, except `.env.example`.
+Set these in your shell, for example `PORT=4000 pnpm start`, or in a gitignored `.env.local` at the repo root, which the server and the db scripts load. Shell variables win. With `NODE_ENV=production` (as `pnpm start` sets) the server refuses to start without the required ones. `.env` and `.env.*` are gitignored, except `.env.example`.
 
 ## Working with Claude Code
 

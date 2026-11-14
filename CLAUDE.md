@@ -18,8 +18,10 @@ A pnpm monorepo: `apps/web` (Vite + React), `apps/server` (Hono on Node), `packa
 - `pnpm db:up` / `pnpm db:down`: start or stop the shared local stack (`docker compose up -d --wait` / `docker compose down`): Postgres 18, PgBouncer in transaction mode, MinIO. One stack serves every worktree. `db:down` keeps the data volumes.
 - `pnpm dev`: Vite on 5173 and Hono on 3000 together. Vite proxies `/healthz` and `/api` to Hono.
 - `pnpm build`, then `pnpm start`: Hono serves the built SPA and `/healthz`.
-- `pnpm test`: all unit tests (Vitest). `pnpm test:related <files>` runs the tests that touch those files.
-- `pnpm check`: everything CI runs except `pnpm audit`: `typecheck` (`tsc -b`), `lint` (Biome), `lint:types` (type-aware ESLint), `knip`, `depcruise`, `check:terms`, `test`.
+- `pnpm db:seed`: migrates the local database and loads fake Staff members (password `ping-local-dev-password`). `pnpm db:migrate` migrates only.
+- `pnpm test`: unit tests (Vitest), no database. `pnpm test:int`: integration tests, the RLS suite, the catalog guard, the permission matrix and the PgBouncer test (needs `pnpm db:up`). `pnpm test:e2e`: Playwright against the built app. `pnpm test:related <files>` runs the tests that touch those files.
+- `pnpm check`: everything CI runs except `pnpm audit` and Playwright: `typecheck` (`tsc -b`), `lint` (Biome), `lint:types` (type-aware ESLint), `knip`, `depcruise`, `check:terms`, `test`, `test:int`.
+- **Testing:** read `docs/testing.md` before writing tests. It covers each suite, its harness and what every slice must ship.
 
 ## Workflow
 
