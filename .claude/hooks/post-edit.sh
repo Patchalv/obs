@@ -10,6 +10,8 @@ cd "$root" || exit 0
 input="$(cat)"
 file="$(printf '%s' "$input" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).tool_input?.file_path??"")}catch{console.log("")}})')"
 [ -n "$file" ] && [ -f "$file" ] || exit 0
+# Only files inside the repo: Biome crashes on paths outside its root.
+[[ "$file" == "$root"/* ]] || exit 0
 
 status=0
 if [ -x node_modules/.bin/biome ]; then
