@@ -7,7 +7,7 @@
     "./app-type": "./src/app-type.ts"
   },
   "scripts": {
-    "dev": "tsx watch --clear-screen=false src/index.ts",
+    "dev": "PORT=${SERVER_PORT:-3000} tsx watch --clear-screen=false src/index.ts",
     "start": "NODE_ENV=production tsx src/index.ts"
   },
   "dependencies": {
