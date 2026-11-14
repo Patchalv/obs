@@ -77,6 +77,8 @@ export function createAuth(database: Database, config: ServerConfig['auth']) {
         const ip = clientIp(ctx.request?.headers ?? ctx.headers);
         const newSession = ctx.context.newSession;
 
+        // An audit insert that fails makes the sign-in fail loudly too, even though the
+        // session row exists: a sign-in with no audit record is worse than a retry.
         if (newSession && !isAPIError(ctx.context.returned)) {
           const staffId = newSession.user.id;
           await database.withStaffTx(staffId, (tx) =>

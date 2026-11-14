@@ -137,20 +137,23 @@ GRANT EXECUTE ON FUNCTION public.current_staff_is_admin() TO ping_app, ping_syst
 -- guard). The auth module reaches them as ping_app.
 GRANT SELECT, INSERT, UPDATE, DELETE ON "user", "session", "account", "verification" TO ping_app;--> statement-breakpoint
 
+-- Policies call the helpers as (SELECT fn()), so Postgres evaluates them once per
+-- statement rather than once per row. Later tables follow the same pattern.
+--
 -- staff_member: every signed-in (active) Staff member reads; only an Admin writes, never their own
 -- row; an Admin deletes only an Invited person.
 GRANT SELECT, INSERT, UPDATE, DELETE ON "staff_member" TO ping_app;--> statement-breakpoint
 ALTER TABLE "staff_member" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
 ALTER TABLE "staff_member" FORCE ROW LEVEL SECURITY;--> statement-breakpoint
 CREATE POLICY staff_member_select ON "staff_member" FOR SELECT TO ping_app
-  USING (public.current_staff_is_active());--> statement-breakpoint
+  USING ((SELECT public.current_staff_is_active()));--> statement-breakpoint
 CREATE POLICY staff_member_insert ON "staff_member" FOR INSERT TO ping_app
-  WITH CHECK (public.current_staff_is_admin());--> statement-breakpoint
+  WITH CHECK ((SELECT public.current_staff_is_admin()));--> statement-breakpoint
 CREATE POLICY staff_member_update ON "staff_member" FOR UPDATE TO ping_app
-  USING (public.current_staff_is_admin() AND id <> public.current_staff_id())
-  WITH CHECK (public.current_staff_is_admin() AND id <> public.current_staff_id());--> statement-breakpoint
+  USING ((SELECT public.current_staff_is_admin()) AND id <> (SELECT public.current_staff_id()))
+  WITH CHECK ((SELECT public.current_staff_is_admin()) AND id <> (SELECT public.current_staff_id()));--> statement-breakpoint
 CREATE POLICY staff_member_delete ON "staff_member" FOR DELETE TO ping_app
-  USING (public.current_staff_is_admin() AND id <> public.current_staff_id() AND joined_at IS NULL);--> statement-breakpoint
+  USING ((SELECT public.current_staff_is_admin()) AND id <> (SELECT public.current_staff_id()) AND joined_at IS NULL);--> statement-breakpoint
 
 -- audit_event: ping_app may only insert, as itself or anonymously (failed sign-ins).
 -- Nothing reads it through the app. ping_system runs the retention sweeper.
@@ -159,6 +162,6 @@ GRANT SELECT, INSERT, DELETE ON "audit_event" TO ping_system;--> statement-break
 ALTER TABLE "audit_event" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
 ALTER TABLE "audit_event" FORCE ROW LEVEL SECURITY;--> statement-breakpoint
 CREATE POLICY audit_event_insert ON "audit_event" FOR INSERT TO ping_app
-  WITH CHECK (actor_id IS NULL OR actor_id = public.current_staff_id());--> statement-breakpoint
+  WITH CHECK (actor_id IS NULL OR actor_id = (SELECT public.current_staff_id()));--> statement-breakpoint
 CREATE POLICY audit_event_system ON "audit_event" FOR ALL TO ping_system
   USING (true) WITH CHECK (true);

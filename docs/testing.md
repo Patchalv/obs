@@ -87,7 +87,7 @@ Table-driven actor × Channel × action rows, run through the real Hono app in-p
 
 ### The route-coverage guard (`apps/server/src/test/route-coverage.test.ts`)
 
-It lists every registered Hono route and fails if one has neither a matrix row nor an allowlist entry. The allowlist, in `route-coverage.ts`, holds `/healthz` and Better Auth's routes; invite accept and password reset join it in their slices.
+It lists every registered Hono route and fails if one has neither a matrix row nor an allowlist entry. The allowlist, in `route-coverage.ts`, holds `/healthz`, Better Auth's routes and the built SPA (`ALL /*` for its files, `GET /*` for client-side routes); invite accept and password reset join it in their slices. Hono records `app.use` middleware and `app.all` handlers the same way, with method `ALL`, so every `ALL` entry must be allowlisted: register real handlers on a specific method, with matrix rows.
 
 ### The PgBouncer test (`apps/server/src/db/pgbouncer.int.test.ts`)
 

@@ -34,7 +34,8 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     return localDefault;
   };
 
-  const baseUrl = required('BETTER_AUTH_URL', `http://localhost:${env.PORT ?? '5173'}`);
+  // Locally people open Vite on 5173, even though the server itself runs on SERVER_PORT.
+  const baseUrl = required('BETTER_AUTH_URL', 'http://localhost:5173');
   const trustedOrigins = env.BETTER_AUTH_TRUSTED_ORIGINS
     ? env.BETTER_AUTH_TRUSTED_ORIGINS.split(',').map((origin) => origin.trim())
     : isProduction

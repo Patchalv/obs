@@ -135,7 +135,7 @@ compose.yaml       local Postgres, PgBouncer and MinIO
 | `DATABASE_URL` | `ping_app` through local PgBouncer | The app's request role. Required in production. |
 | `SYSTEM_DATABASE_URL` | `ping_system` through local PgBouncer | The role for work with no signed-in Staff member. Required in production. |
 | `MIGRATION_DATABASE_URL` | the local owner, `ping` | Migrations and the dev seed only. The running app never uses it. |
-| `BETTER_AUTH_URL` | `http://localhost:$PORT` | The URL people open. Required in production. |
+| `BETTER_AUTH_URL` | `http://localhost:5173` | The URL people open. Required in production. |
 | `BETTER_AUTH_SECRET` | a local-only value | Signs sessions. Required in production. |
 | `BETTER_AUTH_TRUSTED_ORIGINS` | the auth URL plus ports 5173 and 3000 | Origins allowed to call the auth routes, comma-separated. |
 

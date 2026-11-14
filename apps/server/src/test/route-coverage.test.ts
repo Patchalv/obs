@@ -47,9 +47,15 @@ describe('route-coverage guard', () => {
     ]);
   });
 
-  it('ignores middleware', () => {
+  it('fails on a handler registered for every method', () => {
+    const app = realApp();
+    app.all('/api/x', (c) => c.json({}));
+    expect(uncoveredRoutes(app.routes, coveredRoutes())).toEqual(['ALL /api/x']);
+  });
+
+  it('fails on middleware that is not allowlisted, since Hono records it like app.all', () => {
     const app = realApp();
     app.use('/api/*', async (_c, next) => next());
-    expect(uncoveredRoutes(app.routes, coveredRoutes())).toEqual([]);
+    expect(uncoveredRoutes(app.routes, coveredRoutes())).toEqual(['ALL /api/*']);
   });
 });

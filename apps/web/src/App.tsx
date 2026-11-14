@@ -33,11 +33,14 @@ export function App() {
 /** Placeholder until the inbox exists. */
 function SignedIn({ name }: { name: string }) {
   const [signingOut, setSigningOut] = useState(false);
+  const [signOutFailed, setSignOutFailed] = useState(false);
 
   async function signOut() {
     setSigningOut(true);
-    await authClient.signOut();
+    setSignOutFailed(false);
+    const { error } = await authClient.signOut();
     setSigningOut(false);
+    if (error) setSignOutFailed(true);
   }
 
   return (
@@ -56,6 +59,11 @@ function SignedIn({ name }: { name: string }) {
       <section className="home__body">
         <h1 className="home__greeting">Signed in as {name}</h1>
         <p className="home__note">Channels, Threads and Pings arrive in the next slices.</p>
+        {signOutFailed && (
+          <p className="sign-in__error" role="alert">
+            Signing out didn’t work. Try again.
+          </p>
+        )}
       </section>
     </main>
   );
