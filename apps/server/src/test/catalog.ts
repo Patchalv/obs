@@ -14,6 +14,8 @@ const TABLES_WITHOUT_RLS = ['account', 'session', 'user', 'verification'];
 const SECURITY_DEFINER_FUNCTIONS = [
   // Policy helper: is the acting Staff member an active Admin?
   'current_staff_is_admin',
+  // Policy helper: is the acting Staff member an existing, active Staff member?
+  'current_staff_is_active',
 ];
 
 const APP_ROLES = ['ping_app', 'ping_system'];

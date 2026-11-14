@@ -117,19 +117,33 @@ CREATE FUNCTION public.current_staff_is_admin() RETURNS boolean
     )
   $$;--> statement-breakpoint
 REVOKE ALL ON FUNCTION public.current_staff_is_admin() FROM PUBLIC;--> statement-breakpoint
+
+-- Policy helper: is the acting Staff member an existing, active Staff member? A made-up or
+-- Deactivated app.staff_id reads nothing. SECURITY DEFINER for the same reason as above.
+CREATE FUNCTION public.current_staff_is_active() RETURNS boolean
+  LANGUAGE sql STABLE SECURITY DEFINER
+  SET search_path = pg_catalog
+  AS $$
+    SELECT EXISTS (
+      SELECT 1 FROM public.staff_member
+      WHERE id = public.current_staff_id() AND deactivated_at IS NULL
+    )
+  $$;--> statement-breakpoint
+REVOKE ALL ON FUNCTION public.current_staff_is_active() FROM PUBLIC;--> statement-breakpoint
+GRANT EXECUTE ON FUNCTION public.current_staff_is_active() TO ping_app, ping_system;--> statement-breakpoint
 GRANT EXECUTE ON FUNCTION public.current_staff_is_admin() TO ping_app, ping_system;--> statement-breakpoint
 
 -- Better Auth's tables have no row-level security (an explicit allowlist in the catalog
 -- guard). The auth module reaches them as ping_app.
 GRANT SELECT, INSERT, UPDATE, DELETE ON "user", "session", "account", "verification" TO ping_app;--> statement-breakpoint
 
--- staff_member: every signed-in Staff member reads; only an Admin writes, never their own
+-- staff_member: every signed-in (active) Staff member reads; only an Admin writes, never their own
 -- row; an Admin deletes only an Invited person.
 GRANT SELECT, INSERT, UPDATE, DELETE ON "staff_member" TO ping_app;--> statement-breakpoint
 ALTER TABLE "staff_member" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
 ALTER TABLE "staff_member" FORCE ROW LEVEL SECURITY;--> statement-breakpoint
 CREATE POLICY staff_member_select ON "staff_member" FOR SELECT TO ping_app
-  USING (public.current_staff_id() IS NOT NULL);--> statement-breakpoint
+  USING (public.current_staff_is_active());--> statement-breakpoint
 CREATE POLICY staff_member_insert ON "staff_member" FOR INSERT TO ping_app
   WITH CHECK (public.current_staff_is_admin());--> statement-breakpoint
 CREATE POLICY staff_member_update ON "staff_member" FOR UPDATE TO ping_app

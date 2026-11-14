@@ -34,19 +34,16 @@ export function createDatabase(connectionString: string): Database {
   const pool = new pg.Pool({ connectionString, max: 10 });
   const db = drizzle(pool, { schema });
 
+  // '' means no Staff member: current_staff_id() reads it as null.
+  const inTx = <T>(staffId: string, fn: (tx: Tx) => Promise<T>) =>
+    db.transaction(async (tx) => {
+      await tx.execute(sql`select set_config('app.staff_id', ${staffId}, true)`);
+      return fn(tx);
+    });
+
   return {
-    withStaffTx(staffId, fn) {
-      return db.transaction(async (tx) => {
-        await tx.execute(sql`select set_config('app.staff_id', ${staffId}, true)`);
-        return fn(tx);
-      });
-    },
-    withAnonymousTx(fn) {
-      return db.transaction(async (tx) => {
-        await tx.execute(sql`select set_config('app.staff_id', '', true)`);
-        return fn(tx);
-      });
-    },
+    withStaffTx: (staffId, fn) => inTx(staffId, fn),
+    withAnonymousTx: (fn) => inTx('', fn),
     authDb: db,
     close: () => pool.end(),
   };

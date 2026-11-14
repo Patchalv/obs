@@ -7,7 +7,7 @@ import pg from 'pg';
 
 const migrationsDir = fileURLToPath(new URL('./migrations', import.meta.url));
 
-type RolePasswords = { pingApp: string; pingSystem: string };
+export type RolePasswords = { pingApp: string; pingSystem: string };
 
 export async function runMigrations(
   ownerUrl: string,

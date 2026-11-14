@@ -32,6 +32,20 @@ describe('staff_member SELECT', () => {
     });
   });
 
+  it('returns nothing to a Deactivated Staff member', async () => {
+    const deactivated = await createStaffMember({ deactivated: true });
+    await asPingApp(deactivated.id, async (query) => {
+      expect((await query('select id from staff_member')).rowCount).toBe(0);
+    });
+  });
+
+  it('returns nothing to an app.staff_id that is no Staff member', async () => {
+    await createStaffMember();
+    await asPingApp(randomUUID(), async (query) => {
+      expect((await query('select id from staff_member')).rowCount).toBe(0);
+    });
+  });
+
   it('returns nothing when app.staff_id is unset', async () => {
     await createStaffMember();
     await asPingApp(null, async (query) => {

@@ -39,6 +39,8 @@ test('a Deactivated Staff member is refused', async ({ page }) => {
   await page.getByLabel('Email').fill('carlos.vidal@example.com');
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('alert')).toHaveText('This account can’t sign in. Ask a Ping Admin.');
+  await expect(page.getByRole('alert')).toHaveText(
+    'You’ve been Deactivated in Ping. Ask a Ping Admin.',
+  );
   await expect(page.getByRole('heading', { name: 'Sign in to Ping' })).toBeVisible();
 });

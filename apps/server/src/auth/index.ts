@@ -64,7 +64,7 @@ export function createAuth(database: Database, config: ServerConfig['auth']) {
             if (!staff || staff.deactivatedAt) {
               throw new APIError('FORBIDDEN', {
                 code: DEACTIVATED_CODE,
-                message: 'This account can’t sign in. Ask a Ping Admin.',
+                message: 'You’ve been Deactivated in Ping. Ask a Ping Admin.',
               });
             }
           },

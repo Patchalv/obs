@@ -2,6 +2,7 @@
 // Docker stack; production (NODE_ENV=production) must set the ones marked required.
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import type { RolePasswords } from './db/migrate';
 
 const envLocal = fileURLToPath(new URL('../../../.env.local', import.meta.url));
 
@@ -60,4 +61,7 @@ export function migrationDatabaseUrl(env: NodeJS.ProcessEnv = process.env): stri
 }
 
 /** The local role passwords `pnpm db:migrate` sets. Hosted environments set their own. */
-export const LOCAL_ROLE_PASSWORDS = { pingApp: 'ping_app', pingSystem: 'ping_system' };
+export const LOCAL_ROLE_PASSWORDS: RolePasswords = {
+  pingApp: 'ping_app',
+  pingSystem: 'ping_system',
+};

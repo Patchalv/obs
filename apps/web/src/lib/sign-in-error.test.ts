@@ -8,8 +8,12 @@ describe('signInErrorMessage', () => {
 
   it('tells a Deactivated Staff member to ask an Admin', () => {
     expect(signInErrorMessage({ status: 403, code: 'STAFF_MEMBER_DEACTIVATED' })).toBe(
-      'This account can’t sign in. Ask a Ping Admin.',
+      'You’ve been Deactivated in Ping. Ask a Ping Admin.',
     );
+  });
+
+  it('treats another 403 as a general failure', () => {
+    expect(signInErrorMessage({ status: 403 })).toBe('Something went wrong. Try again.');
   });
 
   it('asks the person to wait after too many attempts', () => {

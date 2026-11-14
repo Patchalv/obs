@@ -113,6 +113,9 @@ export const staffMember = pgTable(
   ],
 );
 
+/** Every kind of audit_event. Later slices add invites, role changes and the rest. */
+export type AuditEventKind = 'sign_in_succeeded' | 'sign_in_failed';
+
 /**
  * Security-relevant actions, kept for one year. Never holds message bodies or email
  * addresses. `actor_id` is null for system actions and failed sign-ins.
@@ -123,7 +126,7 @@ export const auditEvent = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     createdAt: createdAt(),
     actorId: uuid('actor_id').references(() => staffMember.id),
-    kind: text('kind').notNull(),
+    kind: text('kind').$type<AuditEventKind>().notNull(),
     // No foreign key: the record outlives a cancelled invite's staff_member row.
     targetStaffId: uuid('target_staff_id'),
     ipAddress: text('ip_address'),

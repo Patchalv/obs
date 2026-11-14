@@ -12,8 +12,8 @@ serverUrl.pathname = '/postgres';
 
 const client = new pg.Client({ connectionString: serverUrl.toString() });
 await client.connect();
-await client.query(`drop database if exists ${name} with (force)`);
-await client.query(`create database ${name}`);
+await client.query(`drop database if exists ${client.escapeIdentifier(name)} with (force)`);
+await client.query(`create database ${client.escapeIdentifier(name)}`);
 await client.end();
 
 const ownerUrl = new URL(serverUrl);

@@ -1,3 +1,6 @@
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { createApp } from '../app';
 import { createAuth } from '../auth';
@@ -5,14 +8,17 @@ import { createDatabase } from '../db';
 import { coveredRoutes } from './permission-matrix/matrix';
 import { uncoveredRoutes } from './route-coverage';
 
-// The real app. Building it never connects to the database.
+// The real app, as production builds it: serving a built SPA. Building it never connects
+// to the database.
 function realApp() {
+  const webDistDir = mkdtempSync(join(tmpdir(), 'ping-route-coverage-'));
+  writeFileSync(join(webDistDir, 'index.html'), '<!doctype html><title>Ping</title>');
   const auth = createAuth(createDatabase('postgres://nobody@localhost:1/none'), {
     secret: 'route-coverage-test-secret-not-used',
     baseUrl: 'http://localhost:3000',
     trustedOrigins: ['http://localhost:3000'],
   });
-  return createApp({ auth });
+  return createApp({ auth, webDistDir });
 }
 
 describe('route-coverage guard', () => {
